@@ -23,7 +23,11 @@ import {
   ChevronUp,
 } from 'lucide-react';
 import { HazardReport } from '@/types/hazard';
-import { ASSESSMENT_CRITERIA, DAFTAR_18_RISIKO_UTAMA } from '@/lib/assessment-standards';
+import {
+  ASSESSMENT_CRITERIA,
+  DAFTAR_18_RISIKO_UTAMA,
+  getParameterDeductionDetail,
+} from '@/lib/assessment-standards';
 
 interface AIAssessmentDetailProps {
   report: HazardReport | null;
@@ -38,6 +42,7 @@ export const AIAssessmentDetail: React.FC<AIAssessmentDetailProps> = ({
 }) => {
   const [isReassessing, setIsReassessing] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copiedGuide, setCopiedGuide] = useState(false);
   const [showStandardsGuide, setShowStandardsGuide] = useState(false);
   const [currentReport, setCurrentReport] = useState<HazardReport | null>(report);
 
@@ -298,63 +303,477 @@ Rekomendasi Perbaikan: ${currentReport.aiRecommendation}`;
               </div>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-              {/* 1. Presisi Lokasi Bahaya */}
-              <div className="bg-white p-3.5 rounded-lg border-2 border-emerald-300 shadow-xs flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs text-emerald-800 font-bold flex items-center gap-1">
-                      <MapPin className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>1. Presisi Lokasi</span>
+            {/* Parameter Deduction Calculations & Guidance */}
+            {(() => {
+              const deductionContext = {
+                lokasi: currentReport.lokasi,
+                area: currentReport.area,
+                subArea: currentReport.subArea,
+                statusLokasi: currentReport.statusLokasi,
+                analisisLokasiAI: currentReport.analisisLokasiAI,
+                temuan: currentReport.temuan,
+                risikoUtama: currentReport.risikoUtama,
+                kategoriTemuan: currentReport.kategoriTemuan,
+                aiFindings: currentReport.aiFindings,
+              };
+
+              const lokasiDetail = getParameterDeductionDetail(
+                'presisiLokasi',
+                currentReport.scoreBreakdown?.presisiLokasi ?? 35,
+                deductionContext
+              );
+              const hazardDetail = getParameterDeductionDetail(
+                'identifikasiHazard',
+                currentReport.scoreBreakdown?.identifikasiHazard ?? 25,
+                deductionContext
+              );
+              const risikoDetail = getParameterDeductionDetail(
+                'identifikasiRisiko',
+                currentReport.scoreBreakdown?.identifikasiRisiko ?? 25,
+                deductionContext
+              );
+
+              const totalDeduction = lokasiDetail.deduction + hazardDetail.deduction + risikoDetail.deduction;
+              const currentTotalRubricScore = lokasiDetail.currentScore + hazardDetail.currentScore + risikoDetail.currentScore;
+
+              const handleCopyGuide = () => {
+                const guideText = `PANDUAN LAPORAN HAZARD STANDAR MUTU K3 (MENUJU SKOR 100%):
+1. LOKASI PRESISI (Maks 40 Poin):
+   Format: [Area Utama] > [Sub Area / Fasilitas] > [Patokan Fisik Tetap / No. Bay / No. Unit / KM]
+   Rujukan: ${lokasiDetail.contohRujukan}
+
+2. OBJEK HAZARD (Maks 30 Poin):
+   Format: [Nama Alat / Aktivitas] + [Komponen Spesifik yang Rusak] + [Wujud Kondisi Tidak Aman]
+   Rujukan: ${hazardDetail.contohRujukan}
+
+3. UKURAN RISIKO (Maks 30 Poin):
+   Format: [Pihak / Unit Terdampak] + [Mekanisme Celaka] + [Skenario Terburuk Sesuai 18 Risiko Utama]
+   Rujukan: ${risikoDetail.contohRujukan}`;
+
+                navigator.clipboard.writeText(guideText).then(() => {
+                  setCopiedGuide(true);
+                  setTimeout(() => setCopiedGuide(false), 2500);
+                });
+              };
+
+              return (
+                <div className="space-y-4">
+                  {/* 3 Parameter Cards */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 text-xs">
+                    {/* 1. Presisi Lokasi Bahaya */}
+                    <div
+                      className={`bg-white p-4 rounded-xl border-2 flex flex-col justify-between transition-all ${
+                        lokasiDetail.isPerfect
+                          ? 'border-emerald-300 shadow-xs'
+                          : 'border-amber-300/80 shadow-2xs'
+                      }`}
+                    >
+                      <div>
+                        {/* Header & Status Pill */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="text-xs text-slate-900 font-bold flex items-center gap-1.5">
+                              <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>1. Presisi Lokasi</span>
+                            </div>
+                            <div className="text-[10px] text-slate-500 mt-0.5 font-medium">
+                              Bobot 40% (Maksimal 40 Poin)
+                            </div>
+                          </div>
+                          {lokasiDetail.isPerfect ? (
+                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-300 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                              100% Penuh
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
+                              <AlertTriangle className="w-3 h-3 text-amber-600" />
+                              Kurang -{lokasiDetail.deduction} Poin
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Score Numbers */}
+                        <div className="mt-3 flex items-baseline justify-between pb-2 border-b border-slate-100">
+                          <span
+                            className={`text-2xl font-black ${
+                              lokasiDetail.isPerfect ? 'text-emerald-700' : 'text-slate-900'
+                            }`}
+                          >
+                            {lokasiDetail.currentScore}
+                          </span>
+                          <span className="text-xs font-semibold text-slate-400">/ 40 Poin</span>
+                        </div>
+
+                        {/* Description */}
+                        <p className="text-[11px] text-slate-600 mt-2 leading-relaxed">
+                          Menjelaskan lokasi kejadian secara spesifik, jelas, dan dapat ditemukan kembali tanpa bertanya ulang.
+                        </p>
+
+                        {/* Breakdown Kekurangan & Cara 100% */}
+                        <div className="mt-3 space-y-2 text-left">
+                          {/* Alasan Kekurangan Poin */}
+                          <div
+                            className={`p-2.5 rounded-lg border text-[11px] leading-relaxed ${
+                              lokasiDetail.isPerfect
+                                ? 'bg-emerald-50/60 border-emerald-200 text-emerald-950'
+                                : 'bg-amber-50/80 border-amber-200 text-amber-950'
+                            }`}
+                          >
+                            <div className="font-bold flex items-center gap-1 mb-1 text-[10px] uppercase tracking-wide">
+                              {lokasiDetail.isPerfect ? (
+                                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                              ) : (
+                                <AlertTriangle className="w-3 h-3 text-amber-600" />
+                              )}
+                              <span>
+                                {lokasiDetail.isPerfect
+                                  ? 'Evaluasi Standar Tercapai:'
+                                  : 'Kekurangan Nilai Berdasarkan Apa:'}
+                              </span>
+                            </div>
+                            <p className="text-[11px]">{lokasiDetail.alasanKekurangan}</p>
+                          </div>
+
+                          {/* Panduan Menuju 100% */}
+                          <div className="p-2.5 rounded-lg border border-emerald-200 bg-emerald-50/60 text-[11px] leading-relaxed text-emerald-950">
+                            <div className="font-bold flex items-center gap-1 mb-1 text-[10px] uppercase tracking-wide text-emerald-800">
+                              <Lightbulb className="w-3 h-3 text-emerald-600" />
+                              <span>Agar Menjadi 100% (Refrensi Pelapor):</span>
+                            </div>
+                            <p className="text-[11px] text-slate-700 font-medium mb-1.5">
+                              {lokasiDetail.langkahMenuju100}
+                            </p>
+                            <div className="text-[10px] bg-white p-2 rounded border border-emerald-200/80 font-mono text-emerald-900 break-words">
+                              {lokasiDetail.contohRujukan}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 2. Objek Hazard */}
+                    <div
+                      className={`bg-white p-4 rounded-xl border-2 flex flex-col justify-between transition-all ${
+                        hazardDetail.isPerfect
+                          ? 'border-emerald-300 shadow-xs'
+                          : 'border-amber-300/80 shadow-2xs'
+                      }`}
+                    >
+                      <div>
+                        {/* Header & Status Pill */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="text-xs text-slate-900 font-bold flex items-center gap-1.5">
+                              <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                              <span>2. Objek Hazard</span>
+                            </div>
+                            <div className="text-[10px] text-slate-500 mt-0.5 font-medium">
+                              Bobot 30% (Maksimal 30 Poin)
+                            </div>
+                          </div>
+                          {hazardDetail.isPerfect ? (
+                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-300 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                              100% Penuh
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
+                              <AlertTriangle className="w-3 h-3 text-amber-600" />
+                              Kurang -{hazardDetail.deduction} Poin
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Score Numbers */}
+                        <div className="mt-3 flex items-baseline justify-between pb-2 border-b border-slate-100">
+                          <span
+                            className={`text-2xl font-black ${
+                              hazardDetail.isPerfect ? 'text-emerald-700' : 'text-slate-900'
+                            }`}
+                          >
+                            {hazardDetail.currentScore}
+                          </span>
+                          <span className="text-xs font-semibold text-slate-400">/ 30 Poin</span>
+                        </div>
+
+                        {/* Description */}
+                        <p className="text-[11px] text-slate-600 mt-2 leading-relaxed">
+                          Menjelaskan objek, kondisi, peralatan, atau tindakan sumber bahaya secara spesifik (bukan kategori umum).
+                        </p>
+
+                        {/* Breakdown Kekurangan & Cara 100% */}
+                        <div className="mt-3 space-y-2 text-left">
+                          {/* Alasan Kekurangan Poin */}
+                          <div
+                            className={`p-2.5 rounded-lg border text-[11px] leading-relaxed ${
+                              hazardDetail.isPerfect
+                                ? 'bg-emerald-50/60 border-emerald-200 text-emerald-950'
+                                : 'bg-amber-50/80 border-amber-200 text-amber-950'
+                            }`}
+                          >
+                            <div className="font-bold flex items-center gap-1 mb-1 text-[10px] uppercase tracking-wide">
+                              {hazardDetail.isPerfect ? (
+                                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                              ) : (
+                                <AlertTriangle className="w-3 h-3 text-amber-600" />
+                              )}
+                              <span>
+                                {hazardDetail.isPerfect
+                                  ? 'Evaluasi Standar Tercapai:'
+                                  : 'Kekurangan Nilai Berdasarkan Apa:'}
+                              </span>
+                            </div>
+                            <p className="text-[11px]">{hazardDetail.alasanKekurangan}</p>
+                          </div>
+
+                          {/* Panduan Menuju 100% */}
+                          <div className="p-2.5 rounded-lg border border-emerald-200 bg-emerald-50/60 text-[11px] leading-relaxed text-emerald-950">
+                            <div className="font-bold flex items-center gap-1 mb-1 text-[10px] uppercase tracking-wide text-emerald-800">
+                              <Lightbulb className="w-3 h-3 text-emerald-600" />
+                              <span>Agar Menjadi 100% (Refrensi Pelapor):</span>
+                            </div>
+                            <p className="text-[11px] text-slate-700 font-medium mb-1.5">
+                              {hazardDetail.langkahMenuju100}
+                            </p>
+                            <div className="text-[10px] bg-white p-2 rounded border border-emerald-200/80 font-mono text-emerald-900 break-words">
+                              {hazardDetail.contohRujukan}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 3. Identifikasi & Ukuran Risiko */}
+                    <div
+                      className={`bg-white p-4 rounded-xl border-2 flex flex-col justify-between transition-all ${
+                        risikoDetail.isPerfect
+                          ? 'border-emerald-300 shadow-xs'
+                          : 'border-amber-300/80 shadow-2xs'
+                      }`}
+                    >
+                      <div>
+                        {/* Header & Status Pill */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="text-xs text-slate-900 font-bold flex items-center gap-1.5">
+                              <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
+                              <span>3. Ukuran Risiko</span>
+                            </div>
+                            <div className="text-[10px] text-slate-500 mt-0.5 font-medium">
+                              Bobot 30% (Maksimal 30 Poin)
+                            </div>
+                          </div>
+                          {risikoDetail.isPerfect ? (
+                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-300 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                              100% Penuh
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
+                              <AlertTriangle className="w-3 h-3 text-amber-600" />
+                              Kurang -{risikoDetail.deduction} Poin
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Score Numbers */}
+                        <div className="mt-3 flex items-baseline justify-between pb-2 border-b border-slate-100">
+                          <span
+                            className={`text-2xl font-black ${
+                              risikoDetail.isPerfect ? 'text-emerald-700' : 'text-slate-900'
+                            }`}
+                          >
+                            {risikoDetail.currentScore}
+                          </span>
+                          <span className="text-xs font-semibold text-slate-400">/ 30 Poin</span>
+                        </div>
+
+                        {/* Description */}
+                        <p className="text-[11px] text-slate-600 mt-2 leading-relaxed">
+                          Menjelaskan potensi risiko, siapa terdampak, konsekuensi, dan kesesuaian dari 18 Risiko Utama.
+                        </p>
+
+                        {/* Breakdown Kekurangan & Cara 100% */}
+                        <div className="mt-3 space-y-2 text-left">
+                          {/* Alasan Kekurangan Poin */}
+                          <div
+                            className={`p-2.5 rounded-lg border text-[11px] leading-relaxed ${
+                              risikoDetail.isPerfect
+                                ? 'bg-emerald-50/60 border-emerald-200 text-emerald-950'
+                                : 'bg-amber-50/80 border-amber-200 text-amber-950'
+                            }`}
+                          >
+                            <div className="font-bold flex items-center gap-1 mb-1 text-[10px] uppercase tracking-wide">
+                              {risikoDetail.isPerfect ? (
+                                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                              ) : (
+                                <AlertTriangle className="w-3 h-3 text-amber-600" />
+                              )}
+                              <span>
+                                {risikoDetail.isPerfect
+                                  ? 'Evaluasi Standar Tercapai:'
+                                  : 'Kekurangan Nilai Berdasarkan Apa:'}
+                              </span>
+                            </div>
+                            <p className="text-[11px]">{risikoDetail.alasanKekurangan}</p>
+                          </div>
+
+                          {/* Panduan Menuju 100% */}
+                          <div className="p-2.5 rounded-lg border border-emerald-200 bg-emerald-50/60 text-[11px] leading-relaxed text-emerald-950">
+                            <div className="font-bold flex items-center gap-1 mb-1 text-[10px] uppercase tracking-wide text-emerald-800">
+                              <Lightbulb className="w-3 h-3 text-emerald-600" />
+                              <span>Agar Menjadi 100% (Refrensi Pelapor):</span>
+                            </div>
+                            <p className="text-[11px] text-slate-700 font-medium mb-1.5">
+                              {risikoDetail.langkahMenuju100}
+                            </p>
+                            <div className="text-[10px] bg-white p-2 rounded border border-emerald-200/80 font-mono text-emerald-900 break-words">
+                              {risikoDetail.contohRujukan}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div className="text-[10px] text-slate-500 mt-0.5">Bobot 40% (Maksimal 40 Poin)</div>
-                  <p className="text-[10px] text-slate-600 mt-2 leading-snug">
-                    Menjelaskan lokasi kejadian secara spesifik, jelas, dan dapat ditemukan kembali tanpa bertanya ulang.
-                  </p>
-                </div>
-                <div className="mt-3 flex items-baseline justify-between pt-2 border-t border-slate-100">
-                  <span className="text-xl font-black text-emerald-700">
-                    {currentReport.scoreBreakdown?.presisiLokasi ?? 35}
-                  </span>
-                  <span className="text-xs font-semibold text-slate-400">/ 40</span>
-                </div>
-              </div>
 
-              {/* 2. Objek Hazard */}
-              <div className="bg-white p-3.5 rounded-lg border border-slate-200 flex flex-col justify-between">
-                <div>
-                  <div className="text-xs text-slate-800 font-bold">2. Objek Hazard</div>
-                  <div className="text-[10px] text-slate-500 mt-0.5">Bobot 30% (Maksimal 30 Poin)</div>
-                  <p className="text-[10px] text-slate-600 mt-2 leading-snug">
-                    Menjelaskan objek, kondisi, peralatan, atau tindakan sumber bahaya secara spesifik (bukan kategori umum).
-                  </p>
-                </div>
-                <div className="mt-3 flex items-baseline justify-between pt-2 border-t border-slate-100">
-                  <span className="text-xl font-black text-slate-900">
-                    {currentReport.scoreBreakdown?.identifikasiHazard ?? 25}
-                  </span>
-                  <span className="text-xs font-semibold text-slate-400">/ 30</span>
-                </div>
-              </div>
+                  {/* Comprehensive Summary Guidance Banner for Reporter Reference */}
+                  <div className="p-4 rounded-xl bg-linear-to-r from-emerald-50/90 via-white to-purple-50/90 border border-emerald-200 shadow-2xs space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/80 pb-2.5">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 rounded-lg bg-emerald-600 text-white shadow-xs">
+                          <Sparkles className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-bold text-slate-900 uppercase tracking-tight flex items-center gap-1.5">
+                            <span>Refrensi Pelapor: Panduan Mencapai Skor Mutu 100%</span>
+                            <span className="text-[10px] px-2 py-0.2 rounded-full font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                              Standar Mutu K3
+                            </span>
+                          </h4>
+                          <p className="text-[11px] text-slate-500">
+                            Gunakan catatan evaluasi ini sebagai acuan agar laporan berikutnya memperoleh poin maksimal (100/100).
+                          </p>
+                        </div>
+                      </div>
 
-              {/* 3. Identifikasi & Ukuran Risiko */}
-              <div className="bg-white p-3.5 rounded-lg border border-slate-200 flex flex-col justify-between">
-                <div>
-                  <div className="text-xs text-slate-800 font-bold">3. Ukuran Risiko</div>
-                  <div className="text-[10px] text-slate-500 mt-0.5">Bobot 30% (Maksimal 30 Poin)</div>
-                  <p className="text-[10px] text-slate-600 mt-2 leading-snug">
-                    Menjelaskan potensi risiko, siapa terdampak, konsekuensi, dan kesesuaian dari 18 Risiko Utama.
-                  </p>
+                      {/* Deficit & Copy Button */}
+                      <div className="flex items-center gap-2.5 self-start sm:self-auto">
+                        <div className="text-right">
+                          <div className="text-xs font-bold text-slate-800">
+                            Skor Total: {currentTotalRubricScore} / 100
+                          </div>
+                          <div className="text-[10px] font-semibold text-amber-700">
+                            {totalDeduction > 0
+                              ? `Defisit -${totalDeduction} Poin untuk 100% Sempurna`
+                              : '✓ Skor Telah 100% Sempurna'}
+                          </div>
+                        </div>
+                        <button
+                          onClick={handleCopyGuide}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-emerald-800 bg-white hover:bg-emerald-50 border border-emerald-300 rounded-lg transition-colors shadow-2xs shrink-0"
+                        >
+                          {copiedGuide ? <Check className="w-3.5 h-3.5 text-emerald-700" /> : <Copy className="w-3.5 h-3.5" />}
+                          <span>{copiedGuide ? 'Tersalin!' : 'Salin Panduan 100%'}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-[11px] font-semibold text-slate-600">
+                        <span>Capaian Mutu Rubrik Saat Ini</span>
+                        <span className="font-mono text-emerald-700 font-bold">{currentTotalRubricScore}% dari 100%</span>
+                      </div>
+                      <div className="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden">
+                        <div
+                          className={`h-full transition-all duration-500 ${
+                            currentTotalRubricScore >= 95
+                              ? 'bg-emerald-500'
+                              : currentTotalRubricScore >= 80
+                              ? 'bg-blue-500'
+                              : 'bg-amber-500'
+                          }`}
+                          style={{ width: `${currentTotalRubricScore}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* 3 Step Action Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 text-xs pt-1">
+                      <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-2xs flex flex-col justify-between">
+                        <div>
+                          <div className="font-bold text-slate-800 flex items-center justify-between text-[11px] mb-1">
+                            <span className="flex items-center gap-1 text-emerald-800">
+                              <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>Presisi Lokasi (40%)</span>
+                            </span>
+                            <span
+                              className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
+                                lokasiDetail.isPerfect
+                                  ? 'bg-emerald-100 text-emerald-800'
+                                  : 'bg-amber-100 text-amber-800'
+                              }`}
+                            >
+                              {lokasiDetail.isPerfect ? '100%' : `Kurang -${lokasiDetail.deduction}`}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-600 leading-relaxed">
+                            Sebutkan titik acuan fisik permanen (nama ruangan, nomor bay, pilar, atau unit/KM) agar langsung dapat ditemukan tanpa perlu bertanya ulang.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-2xs flex flex-col justify-between">
+                        <div>
+                          <div className="font-bold text-slate-800 flex items-center justify-between text-[11px] mb-1">
+                            <span className="flex items-center gap-1 text-amber-800">
+                              <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                              <span>Objek Hazard (30%)</span>
+                            </span>
+                            <span
+                              className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
+                                hazardDetail.isPerfect
+                                  ? 'bg-emerald-100 text-emerald-800'
+                                  : 'bg-amber-100 text-amber-800'
+                              }`}
+                            >
+                              {hazardDetail.isPerfect ? '100%' : `Kurang -${hazardDetail.deduction}`}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-600 leading-relaxed">
+                            Rinci komponen fisik yang bermasalah dan jenis kondisi tidak amannya (contoh: kabel terkelupas 4cm), hindari hanya menulis frasa umum seperti &quot;rusak&quot;.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-2xs flex flex-col justify-between">
+                        <div>
+                          <div className="font-bold text-slate-800 flex items-center justify-between text-[11px] mb-1">
+                            <span className="flex items-center gap-1 text-purple-800">
+                              <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
+                              <span>Ukuran Risiko (30%)</span>
+                            </span>
+                            <span
+                              className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
+                                risikoDetail.isPerfect
+                                  ? 'bg-emerald-100 text-emerald-800'
+                                  : 'bg-amber-100 text-amber-800'
+                              }`}
+                            >
+                              {risikoDetail.isPerfect ? '100%' : `Kurang -${risikoDetail.deduction}`}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-600 leading-relaxed">
+                            Jelaskan siapa pihak/unit yang berisiko terdampak serta mekanismenya, lalu selaraskan secara tepat dengan salah satu dari 18 Risiko Utama K3.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="mt-3 flex items-baseline justify-between pt-2 border-t border-slate-100">
-                  <span className="text-xl font-black text-slate-900">
-                    {currentReport.scoreBreakdown?.identifikasiRisiko ?? 25}
-                  </span>
-                  <span className="text-xs font-semibold text-slate-400">/ 30</span>
-                </div>
-              </div>
-            </div>
+              );
+            })()}
           </div>
 
           {/* DEDICATED PARAMETER LOKASI BAHAYA (EVALUASI LANGSUNG DARI AI APPS SCRIPT) */}
