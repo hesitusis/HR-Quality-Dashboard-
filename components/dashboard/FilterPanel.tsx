@@ -7,12 +7,7 @@ import { FilterOptions } from '@/types/hazard';
 interface FilterPanelProps {
   filters: FilterOptions;
   setFilters: React.Dispatch<React.SetStateAction<FilterOptions>>;
-  monthCounts: {
-    all: number;
-    mei: number;
-    juni: number;
-    juli: number;
-  };
+  monthCounts: Record<string, number>;
   options: {
     areas: string[];
     subAreas: string[];
@@ -48,23 +43,28 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   ].reduce((a, b) => a + b, 0);
 
   const months = [
-    { label: 'Semua Bulan', value: 'Semua Bulan', count: monthCounts.all },
-    { label: 'Mei 2026', value: 'Mei 2026', count: monthCounts.mei },
-    { label: 'Juni 2026', value: 'Juni 2026', count: monthCounts.juni },
-    { label: 'Juli 2026', value: 'Juli 2026', count: monthCounts.juli },
+    { label: 'Semua Bulan', value: 'Semua Bulan', count: monthCounts['all'] || 0 },
+    { label: 'Mei 2026', value: 'Mei 2026', count: monthCounts['Mei 2026'] || 0 },
+    { label: 'Juni 2026', value: 'Juni 2026', count: monthCounts['Juni 2026'] || 0 },
+    { label: 'Juli 2026', value: 'Juli 2026', count: monthCounts['Juli 2026'] || 0 },
+    { label: 'Agustus 2026', value: 'Agustus 2026', count: monthCounts['Agustus 2026'] || 0 },
+    { label: 'September 2026', value: 'September 2026', count: monthCounts['September 2026'] || 0 },
+    { label: 'Oktober 2026', value: 'Oktober 2026', count: monthCounts['Oktober 2026'] || 0 },
+    { label: 'November 2026', value: 'November 2026', count: monthCounts['November 2026'] || 0 },
+    { label: 'Desember 2026', value: 'Desember 2026', count: monthCounts['Desember 2026'] || 0 },
   ];
 
   const handleMonthChange = (monthValue: string) => {
     setFilters((prev) => ({
       ...prev,
       month: monthValue,
-      period: monthValue === 'Semua Bulan' ? 'Mei – Juli 2026' : monthValue,
+      period: monthValue === 'Semua Bulan' ? 'Mei – Desember 2026' : monthValue,
     }));
   };
 
   const handleReset = () => {
     setFilters({
-      period: 'Mei – Juli 2026',
+      period: 'Mei – Desember 2026',
       month: 'Semua Bulan',
       area: 'Semua Area',
       subArea: 'Semua Sub Area',
@@ -85,51 +85,37 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
       id="filter-panel"
       className="bg-white rounded-xl border border-slate-200/90 shadow-xs mb-6 overflow-hidden"
     >
-      {/* Primary Bar: Month Switcher & Quick Controls */}
-      <div className="p-3.5 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/50">
-        {/* Month Selector Buttons */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
-          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 mr-2 shrink-0">
-            <CalendarDays className="w-4 h-4 text-emerald-600" />
-            <span>Bulan Analisa:</span>
+      {/* Primary Bar: Quick Info & FILTER Toggle */}
+      <div className="p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/60">
+        {/* Left: Active Filters Summary Indicator */}
+        <div className="flex items-center gap-2 flex-wrap text-xs">
+          <div className="flex items-center gap-1.5 font-bold text-slate-800">
+            <Filter className="w-4 h-4 text-emerald-600" />
+            <span>Filter Data</span>
           </div>
 
-          <div className="inline-flex p-1 bg-slate-200/70 rounded-lg shrink-0 gap-1">
-            {months.map((m) => {
-              const isSelected = filters.month === m.value;
-              return (
-                <button
-                  key={m.value}
-                  id={`filter-month-${m.value.toLowerCase().replace(/\s+/g, '-')}`}
-                  onClick={() => handleMonthChange(m.value)}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                    isSelected
-                      ? 'bg-white text-emerald-900 shadow-xs font-bold'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-                  }`}
-                >
-                  <span>{m.label}</span>
-                  <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                      isSelected
-                        ? 'bg-emerald-100 text-emerald-800 font-bold'
-                        : 'bg-slate-300/60 text-slate-600'
-                    }`}
-                  >
-                    {m.count}
-                  </span>
-                </button>
-              );
-            })}
+          <span className="text-slate-300 hidden sm:inline">•</span>
+
+          {/* Current Selected Period Badge */}
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-slate-200 text-xs font-medium text-slate-700 shadow-2xs">
+            <CalendarDays className="w-3.5 h-3.5 text-emerald-600" />
+            <span className="text-slate-500 text-[11px]">Periode:</span>
+            <span className="font-semibold text-emerald-900">{filters.month}</span>
           </div>
+
+          {activeFilterCount > (filters.month !== 'Semua Bulan' ? 1 : 0) && (
+            <span className="text-[11px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200 font-medium">
+              +{activeFilterCount - (filters.month !== 'Semua Bulan' ? 1 : 0)} kriteria aktif
+            </span>
+          )}
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2 self-end md:self-auto">
+        {/* Right: Reset & FILTER Toggle Button */}
+        <div className="flex items-center gap-2 self-end sm:self-auto">
           {activeFilterCount > 0 && (
             <button
               onClick={handleReset}
-              className="text-xs text-rose-600 hover:text-rose-700 font-medium px-2 py-1 rounded hover:bg-rose-50 flex items-center gap-1 transition-colors"
+              className="text-xs text-rose-600 hover:text-rose-700 font-medium px-2.5 py-1.5 rounded-lg hover:bg-rose-50 flex items-center gap-1 transition-colors border border-transparent hover:border-rose-200"
             >
               <X className="w-3.5 h-3.5" />
               <span>Bersihkan ({activeFilterCount})</span>
@@ -139,14 +125,14 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
           <button
             id="toggle-advanced-filters"
             onClick={() => setIsExpanded(!isExpanded)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold border transition-all ${
               isExpanded || activeFilterCount > 0
-                ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
+                ? 'bg-emerald-50 border-emerald-300 text-emerald-800 shadow-2xs'
                 : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
             }`}
           >
-            <SlidersHorizontal className="w-3.5 h-3.5" />
-            <span>Filter Lanjutan</span>
+            <SlidersHorizontal className="w-3.5 h-3.5 text-emerald-600" />
+            <span className="tracking-wide">FILTER</span>
             {activeFilterCount > 0 && (
               <span className="w-4 h-4 rounded-full bg-emerald-600 text-white text-[10px] flex items-center justify-center font-bold">
                 {activeFilterCount}
@@ -163,7 +149,26 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
 
       {/* Expanded Multi-dimension Filters */}
       {isExpanded && (
-        <div className="p-4 bg-white grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 border-t border-slate-100 text-xs">
+        <div className="p-4 bg-white grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 border-t border-slate-100 text-xs">
+          {/* Periode (Bulan) */}
+          <div>
+            <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+              Periode (Bulan)
+            </label>
+            <select
+              id="filter-select-period-month"
+              value={filters.month}
+              onChange={(e) => handleMonthChange(e.target.value)}
+              className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-800 font-medium"
+            >
+              {months.map((m) => (
+                <option key={m.value} value={m.value}>
+                  {m.label} {m.count > 0 ? `(${m.count})` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Area */}
           <div>
             <label className="block text-[11px] font-semibold text-slate-600 mb-1">

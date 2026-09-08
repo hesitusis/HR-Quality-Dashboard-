@@ -15,10 +15,8 @@ import { AIAssessmentDetail } from '@/components/reports/AIAssessmentDetail';
 import { AIAssessmentAuditView } from '@/components/views/AIAssessmentAuditView';
 import { QualityAnalysisDeepView } from '@/components/views/QualityAnalysisDeepView';
 import { TopReporterFullView } from '@/components/views/TopReporterFullView';
-import { DataManagementView } from '@/components/views/DataManagementView';
 import { getInitialHazardReports, calculateQualityScore } from '@/lib/sample-data';
 import { HazardReport, FilterOptions, ReporterStats } from '@/types/hazard';
-import { RotateCw, CheckCircle2 } from 'lucide-react';
 import { parseCSVorTSV, processRawSpreadsheetRows } from '@/lib/csv-importer';
 
 export default function DashboardPage() {
@@ -30,7 +28,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       try {
-        const saved = localStorage.getItem('itu_hazard_reports_v2');
+        const saved = localStorage.getItem('itu_hazard_reports_dec2026');
         if (saved) {
           const parsed = JSON.parse(saved);
           const hasNumericPelaporBug =
@@ -43,7 +41,7 @@ export default function DashboardPage() {
             parsed[0].scoreBreakdown?.tindakanPengendalian !== undefined;
           if (
             Array.isArray(parsed) &&
-            parsed.length >= 100 &&
+            parsed.length >= 1000 &&
             !hasNumericPelaporBug &&
             !hasMissingLocationStatus &&
             !hasOld5ParamRubrik
@@ -61,7 +59,7 @@ export default function DashboardPage() {
 
   // Global Filter State
   const [filters, setFilters] = useState<FilterOptions>({
-    period: 'Mei – Juli 2026',
+    period: 'Mei – Desember 2026',
     month: 'Semua Bulan',
     area: 'Semua Area',
     subArea: 'Semua Sub Area',
@@ -94,13 +92,24 @@ export default function DashboardPage() {
   }, [reports]);
 
   // Counts for Month switcher pills
-  const monthCounts = useMemo(() => {
-    return {
+  const monthCounts: Record<string, number> = useMemo(() => {
+    const counts: Record<string, number> = {
       all: reports.length,
-      mei: reports.filter((r) => r.month === 'Mei 2026').length,
-      juni: reports.filter((r) => r.month === 'Juni 2026').length,
-      juli: reports.filter((r) => r.month === 'Juli 2026').length,
+      'Mei 2026': 0,
+      'Juni 2026': 0,
+      'Juli 2026': 0,
+      'Agustus 2026': 0,
+      'September 2026': 0,
+      'Oktober 2026': 0,
+      'November 2026': 0,
+      'Desember 2026': 0,
     };
+    reports.forEach((r) => {
+      if (r.month) {
+        counts[r.month] = (counts[r.month] || 0) + 1;
+      }
+    });
+    return counts;
   }, [reports]);
 
   // Apply filters dynamically
@@ -242,7 +251,16 @@ export default function DashboardPage() {
 
   // Trend line chart data calculation
   const monthlyTrendData = useMemo(() => {
-    const months = ['Mei 2026', 'Juni 2026', 'Juli 2026'];
+    const months = [
+      'Mei 2026',
+      'Juni 2026',
+      'Juli 2026',
+      'Agustus 2026',
+      'September 2026',
+      'Oktober 2026',
+      'November 2026',
+      'Desember 2026',
+    ];
     return months.map((m) => {
       const monthReps = reports.filter((r) => r.month === m);
       const total = monthReps.length || 1;
@@ -286,7 +304,7 @@ export default function DashboardPage() {
   // Reset filters handler
   const handleResetFilters = () => {
     setFilters({
-      period: 'Mei – Juli 2026',
+      period: 'Mei – Desember 2026',
       month: 'Semua Bulan',
       area: 'Semua Area',
       subArea: 'Semua Sub Area',
@@ -414,21 +432,11 @@ export default function DashboardPage() {
     setSelectedReport(updated);
   };
 
-  const handleAddReport = (newReport: HazardReport) => {
-    setReports((prev) => {
-      const updated = [newReport, ...prev];
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('itu_hazard_reports_v2', JSON.stringify(updated));
-      }
-      return updated;
-    });
-  };
-
   const handleImportReports = (imported: HazardReport[], mode: 'replace' | 'append') => {
     setReports((prev) => {
       const updated = mode === 'replace' ? imported : [...imported, ...prev];
       if (typeof window !== 'undefined') {
-        localStorage.setItem('itu_hazard_reports_v2', JSON.stringify(updated));
+        localStorage.setItem('itu_hazard_reports_dec2026', JSON.stringify(updated));
       }
       return updated;
     });
@@ -444,11 +452,7 @@ export default function DashboardPage() {
       const res = await fetch('/api/sync-sheets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sheetId: '112FPFljq8cJVrYZlcSNvS9BBnWt-Pg-puHRcgtvPod8',
-          sheetName: 'Tarikan HR',
-          gid: '0',
-        }),
+        body: JSON.stringify({}),
       });
       const data = await res.json();
       if (data.success && data.csv) {
@@ -456,26 +460,19 @@ export default function DashboardPage() {
         const imported = processRawSpreadsheetRows(rows);
         if (imported.length > 0) {
           handleImportReports(imported, 'replace');
-          setLiveSyncMessage(`Berhasil menyinkronkan ${imported.length} data terbaru dari Google Sheets!`);
-          setTimeout(() => setLiveSyncMessage(null), 5000);
+          setLiveSyncMessage(`Berhasil memperbarui ${imported.length} data terbaru.`);
+          setTimeout(() => setLiveSyncMessage(null), 4000);
         }
       } else {
         setLiveSyncMessage(data.message || 'Gagal menyinkronkan data.');
+        setTimeout(() => setLiveSyncMessage(null), 4000);
       }
-    } catch (err: any) {
-      setLiveSyncMessage(`Gagal: ${err.message}`);
+    } catch (_err: any) {
+      setLiveSyncMessage('Gagal menyinkronkan data.');
+      setTimeout(() => setLiveSyncMessage(null), 4000);
     } finally {
       setIsLiveSyncing(false);
     }
-  };
-
-  const handleResetData = () => {
-    const initial = getInitialHazardReports();
-    setReports(initial);
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('itu_hazard_reports_v2');
-    }
-    handleResetFilters();
   };
 
   return (
@@ -499,6 +496,9 @@ export default function DashboardPage() {
           onExportData={handleExportCSV}
           searchQuery={filters.searchQuery}
           setSearchQuery={(q) => setFilters((prev) => ({ ...prev, searchQuery: q }))}
+          onRefresh={handleQuickSync}
+          isRefreshing={isLiveSyncing}
+          refreshMessage={liveSyncMessage}
         />
 
         {/* Content Container */}
@@ -506,44 +506,6 @@ export default function DashboardPage() {
           {/* TAB 1: MAIN DASHBOARD */}
           {activeTab === 'dashboard' && (
             <div className="space-y-6">
-              {/* Google Sheets Live Sync Bar */}
-              <div className="bg-gradient-to-r from-emerald-50 via-teal-50/60 to-white border border-emerald-300 rounded-xl px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-                <div className="flex items-center gap-3">
-                  <span className="p-2 bg-emerald-600 text-white rounded-lg shrink-0 shadow-xs">
-                    <CheckCircle2 className="w-4 h-4" />
-                  </span>
-                  <div>
-                    <div className="text-xs font-bold text-slate-900 flex items-center gap-2">
-                      <span>Sumber Data Terhubung: Google Sheets &quot;Tarikan HR&quot;</span>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                        {reports.length} Data Termonitor
-                      </span>
-                    </div>
-                    <div className="text-[11px] text-slate-600">
-                      ID: <span className="font-mono text-emerald-950 font-medium">112FPFljq8cJVrYZlcSNvS9BBnWt-Pg-puHRcgtvPod8</span> • Otomatis dievaluasi AI &amp; terintegrasi langsung
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                  {liveSyncMessage && (
-                    <span className="text-[11px] font-semibold text-emerald-800 bg-emerald-100/90 px-2.5 py-1 rounded border border-emerald-200 animate-fade-in">
-                      {liveSyncMessage}
-                    </span>
-                  )}
-                  <button
-                    id="btn-header-quick-sync"
-                    type="button"
-                    onClick={handleQuickSync}
-                    disabled={isLiveSyncing}
-                    className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 disabled:bg-emerald-400 text-white text-xs font-bold rounded-lg shadow-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
-                  >
-                    <RotateCw className={`w-3.5 h-3.5 ${isLiveSyncing ? 'animate-spin' : ''}`} />
-                    <span>{isLiveSyncing ? 'Menyinkronkan...' : '🔄 Sinkronkan Data Terbaru'}</span>
-                  </button>
-                </div>
-              </div>
-
               {/* Dynamic Filter Panel */}
               <FilterPanel
                 filters={filters}
@@ -697,17 +659,6 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
-          )}
-
-          {/* TAB 7: DATA MANAGEMENT & SPREADSHEET */}
-          {activeTab === 'data-management' && (
-            <DataManagementView
-              reports={reports}
-              onAddReport={handleAddReport}
-              onImportReports={handleImportReports}
-              onResetData={handleResetData}
-              onExportCSV={handleExportCSV}
-            />
           )}
         </main>
       </div>

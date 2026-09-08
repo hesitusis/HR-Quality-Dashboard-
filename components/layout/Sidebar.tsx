@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import {
   LayoutDashboard,
   FileSpreadsheet,
@@ -8,7 +9,6 @@ import {
   TrendingUp,
   Award,
   Gift,
-  Database,
   ShieldCheck,
   Building2,
   ChevronRight,
@@ -20,8 +20,7 @@ export type NavTab =
   | 'ai-assessment'
   | 'quality-analysis'
   | 'top-reporter'
-  | 'monthly-reward'
-  | 'data-management';
+  | 'monthly-reward';
 
 interface SidebarProps {
   activeTab: NavTab;
@@ -73,12 +72,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: Gift,
       badge: '🏆 HSE',
     },
-    {
-      id: 'data-management' as NavTab,
-      label: 'Data Management',
-      icon: Database,
-      badge: undefined,
-    },
   ];
 
   return (
@@ -87,9 +80,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
       className="w-64 bg-slate-900 text-slate-200 flex flex-col border-r border-slate-800 shrink-0 select-none"
     >
       {/* Brand Header */}
-      <div className="p-5 border-b border-slate-800/80 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white shadow-md shadow-emerald-900/40">
-          <ShieldCheck className="w-6 h-6" />
+      <div className="p-4 border-b border-slate-800 flex items-center gap-3">
+        <div className="w-11 h-11 rounded-xl bg-white p-1 flex items-center justify-center shrink-0 shadow-sm border border-slate-700/60 overflow-hidden">
+          <Image
+            src="/logo.png"
+            alt="Logo PT Indotruck Utama"
+            width={44}
+            height={44}
+            className="w-full h-full object-contain"
+            referrerPolicy="no-referrer"
+            priority
+          />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
@@ -101,21 +102,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </span>
           </div>
           <p className="text-[11px] text-slate-400 truncate">
-            Quality Monitoring System
+            PT Indotruck Utama
           </p>
         </div>
       </div>
 
       {/* Corporate Meta Pill */}
-      <div className="mx-4 mt-4 p-3 rounded-lg bg-slate-800/60 border border-slate-800 text-xs">
-        <div className="flex items-center justify-between text-slate-400 text-[11px] mb-1">
+      <div className="mx-3 mt-3 p-2.5 rounded-lg bg-slate-800/70 border border-slate-700/60 text-xs">
+        <div className="flex items-center gap-2 mb-1.5">
+          <div className="w-5 h-5 rounded bg-white p-0.5 shrink-0 flex items-center justify-center overflow-hidden">
+            <Image
+              src="/logo.png"
+              alt="Logo ITU"
+              width={20}
+              height={20}
+              className="w-full h-full object-contain"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+          <div className="text-white font-bold text-xs truncate">
+            PT Indotruck Utama
+          </div>
+        </div>
+        <div className="flex items-center justify-between text-slate-400 text-[11px]">
           <span className="flex items-center gap-1">
             <Building2 className="w-3 h-3 text-slate-400" /> Site MIA 4
           </span>
           <span className="text-emerald-400 font-medium font-mono text-[10px]">v2.6 Enterprise</span>
-        </div>
-        <div className="text-slate-300 font-semibold text-[11px]">
-          PT Indotruck Utama
         </div>
       </div>
 

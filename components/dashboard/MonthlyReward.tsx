@@ -16,7 +16,18 @@ import {
   Printer,
   FileCheck,
 } from 'lucide-react';
-import { HazardReport } from '@/types/hazard';
+import { HazardReport, MonthName } from '@/types/hazard';
+
+const REWARD_MONTHS: MonthName[] = [
+  'Mei 2026',
+  'Juni 2026',
+  'Juli 2026',
+  'Agustus 2026',
+  'September 2026',
+  'Oktober 2026',
+  'November 2026',
+  'Desember 2026',
+];
 
 interface MonthlyRewardProps {
   reports: HazardReport[];
@@ -31,7 +42,7 @@ export const MonthlyReward: React.FC<MonthlyRewardProps> = ({
   onVerifyReport,
   onSetWinner,
 }) => {
-  const [selectedMonth, setSelectedMonth] = useState<'Mei 2026' | 'Juni 2026' | 'Juli 2026'>('Juli 2026');
+  const [selectedMonth, setSelectedMonth] = useState<MonthName>('Desember 2026');
   const [showCertificate, setShowCertificate] = useState(false);
   const [verifyingReport, setVerifyingReport] = useState<HazardReport | null>(null);
   const [verifierName, setVerifierName] = useState('HSE Supervisor Site MIA 4');
@@ -100,16 +111,16 @@ export const MonthlyReward: React.FC<MonthlyRewardProps> = ({
         </div>
 
         {/* Month Selector Tabs */}
-        <div className="flex items-center gap-1.5 p-1 bg-amber-100/70 rounded-xl self-start md:self-auto">
-          {(['Mei 2026', 'Juni 2026', 'Juli 2026'] as const).map((m) => (
+        <div className="flex items-center gap-1.5 p-1 bg-amber-100/70 rounded-xl overflow-x-auto max-w-full pb-1 self-start md:self-auto">
+          {REWARD_MONTHS.map((m) => (
             <button
               key={m}
-              id={`reward-month-${m.toLowerCase().replace(' ', '-')}`}
+              id={`reward-month-${m.toLowerCase().replace(/\s+/g, '-')}`}
               onClick={() => {
                 setSelectedMonth(m);
                 setCustomWinnerId(null);
               }}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
                 selectedMonth === m
                   ? 'bg-amber-500 text-white shadow-xs'
                   : 'text-amber-900 hover:bg-amber-200/60'

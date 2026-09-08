@@ -4,6 +4,10 @@ import './globals.css'; // Global styles
 export const metadata: Metadata = {
   title: 'Hazard Report Quality Dashboard ITU - SISADMO',
   description: 'Monitoring & Penilaian Kualitas Hazard Report Berbasis AI untuk PT Indotruck Utama & SISADMO.',
+  icons: {
+    icon: '/logo.png',
+    apple: '/logo.png',
+  },
   openGraph: {
     title: 'Hazard Report Quality Dashboard ITU - SISADMO',
     description: 'Monitoring & Penilaian Kualitas Hazard Report Berbasis AI untuk PT Indotruck Utama & SISADMO.',

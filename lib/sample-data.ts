@@ -1,14 +1,32 @@
-import { HazardReport, QualityCategory, QualityScoreBreakdown, RiskLevel, AIResultStatus, LocationClarityStatus } from '@/types/hazard';
+import { HazardReport, QualityCategory, QualityScoreBreakdown, RiskLevel, AIResultStatus, LocationClarityStatus, MonthName } from '@/types/hazard';
 import rawDataset497 from './dataset-497.json';
 
 // Helper to determine month from date string
-export function parseMonth(dateStr: string): 'Mei 2026' | 'Juni 2026' | 'Juli 2026' {
-  const lower = dateStr.toLowerCase();
+export function parseMonth(dateStr: string): MonthName {
+  const lower = (dateStr || '').toLowerCase();
   if (lower.includes('mei') || lower.includes('may') || lower.startsWith('5/') || lower.includes('-may-')) {
     return 'Mei 2026';
   }
   if (lower.includes('jun') || lower.startsWith('6/') || lower.includes('-jun-')) {
     return 'Juni 2026';
+  }
+  if (lower.includes('jul') || lower.startsWith('7/') || lower.includes('-jul-')) {
+    return 'Juli 2026';
+  }
+  if (lower.includes('agu') || lower.includes('aug') || lower.startsWith('8/') || lower.includes('-aug-')) {
+    return 'Agustus 2026';
+  }
+  if (lower.includes('sep') || lower.startsWith('9/') || lower.includes('-sep-')) {
+    return 'September 2026';
+  }
+  if (lower.includes('okt') || lower.includes('oct') || lower.startsWith('10/') || lower.includes('-oct-')) {
+    return 'Oktober 2026';
+  }
+  if (lower.includes('nov') || lower.startsWith('11/') || lower.includes('-nov-')) {
+    return 'November 2026';
+  }
+  if (lower.includes('des') || lower.includes('dec') || lower.startsWith('12/') || lower.includes('-dec-')) {
+    return 'Desember 2026';
   }
   return 'Juli 2026';
 }

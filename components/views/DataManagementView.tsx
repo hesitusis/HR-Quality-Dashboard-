@@ -17,7 +17,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { HazardReport } from '@/types/hazard';
-import { calculateQualityScore } from '@/lib/sample-data';
+import { calculateQualityScore, parseMonth } from '@/lib/sample-data';
 import { parseCSVorTSV, processRawSpreadsheetRows } from '@/lib/csv-importer';
 
 interface DataManagementViewProps {
@@ -129,7 +129,7 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({
       aiFindings: aiResult.aiFindings,
       aiRecommendation: aiResult.aiRecommendation,
       topQualityIssue: aiResult.topQualityIssue,
-      month: 'Juli 2026',
+      month: parseMonth(formData.tanggal || new Date().toISOString()),
       aiAssessed: true,
       hseVerified: false,
     };
@@ -720,7 +720,7 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
           <div className="text-xs text-slate-500 font-medium">Total Data Hazard Report</div>
           <div className="text-xl font-bold text-slate-900 mt-1">{reports.length} Baris Data</div>
-          <div className="text-[11px] text-slate-500 mt-1">Periode: Mei, Juni, Juli 2026</div>
+          <div className="text-[11px] text-slate-500 mt-1">Periode: Mei – Desember 2026</div>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">

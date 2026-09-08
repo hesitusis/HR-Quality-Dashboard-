@@ -19,12 +19,22 @@ export interface QualityScoreBreakdown {
   buktiPendukung?: number;         // deprecated / optional
 }
 
+export type MonthName =
+  | 'Mei 2026'
+  | 'Juni 2026'
+  | 'Juli 2026'
+  | 'Agustus 2026'
+  | 'September 2026'
+  | 'Oktober 2026'
+  | 'November 2026'
+  | 'Desember 2026';
+
 export interface HazardReport {
   id: string;
   noHazardReport: string;
   noPICA: string;
   tanggal: string;                 // e.g. "7/31/2026" or "31-Jul-2026"
-  month: 'Mei 2026' | 'Juni 2026' | 'Juli 2026';
+  month: MonthName;
   tanggalTemuan: string;
   tanggalPembuatanLaporan: string;
   tanggalInputClosing: string;

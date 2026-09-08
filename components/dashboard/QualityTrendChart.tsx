@@ -75,11 +75,11 @@ export const QualityTrendChart: React.FC<QualityTrendChartProps> = ({ data }) =>
         <div>
           <div className="flex items-center gap-2">
             <h3 className="text-sm font-bold text-slate-900 tracking-tight">
-              TREND QUALITY SCORE (Mei → Juni → Juli 2026)
+              TREND QUALITY SCORE (Mei – Desember 2026)
             </h3>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Perkembangan Average Quality Score, rasio Sesuai vs Tidak Sesuai per bulan
+            Perkembangan Average Quality Score, rasio Sesuai vs Tidak Sesuai per bulan (Mei s/d Desember 2026)
           </p>
         </div>
 
@@ -156,9 +156,9 @@ export const QualityTrendChart: React.FC<QualityTrendChartProps> = ({ data }) =>
       <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
         <div className="flex items-center gap-1.5">
           <Info className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-          <span>Analisa AI: Verifikasi spesifisitas lokasi dan mitigasi meningkat tajam pada Juli 2026.</span>
+          <span>Analisa AI: Verifikasi spesifisitas lokasi dan identifikasi risiko meningkat progresif dari Q2 hingga Q4 2026.</span>
         </div>
-        <span className="font-semibold text-slate-600 shrink-0">Evaluasi Periode Q2-Q3</span>
+        <span className="font-semibold text-slate-600 shrink-0">Evaluasi Periode Penuh 2026</span>
       </div>
     </div>
   );
