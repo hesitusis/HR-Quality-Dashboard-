@@ -28,7 +28,11 @@ export default function DashboardPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       try {
-        const saved = localStorage.getItem('itu_hazard_reports_dec2026');
+        // Clear any old dummy cached datasets from previous sessions
+        localStorage.removeItem('itu_hazard_reports_dec2026');
+        localStorage.removeItem('itu_hazard_reports_v2');
+
+        const saved = localStorage.getItem('itu_hazard_reports_real_v1');
         if (saved) {
           const parsed = JSON.parse(saved);
           const hasNumericPelaporBug =
@@ -39,15 +43,30 @@ export default function DashboardPage() {
             Array.isArray(parsed) &&
             parsed.length > 0 &&
             parsed[0].scoreBreakdown?.tindakanPengendalian !== undefined;
+          const hasDummyMonths =
+            Array.isArray(parsed) &&
+            parsed.some((r: any) =>
+              ['September 2026', 'Oktober 2026', 'November 2026', 'Desember 2026'].includes(r.month)
+            );
+
           if (
             Array.isArray(parsed) &&
-            parsed.length >= 1000 &&
+            parsed.length > 0 &&
             !hasNumericPelaporBug &&
             !hasMissingLocationStatus &&
-            !hasOld5ParamRubrik
+            !hasOld5ParamRubrik &&
+            !hasDummyMonths
           ) {
             setReports(parsed);
+          } else {
+            const fresh = getInitialHazardReports();
+            setReports(fresh);
+            localStorage.setItem('itu_hazard_reports_real_v1', JSON.stringify(fresh));
           }
+        } else {
+          const fresh = getInitialHazardReports();
+          setReports(fresh);
+          localStorage.setItem('itu_hazard_reports_real_v1', JSON.stringify(fresh));
         }
       } catch (err) {
         console.error('Failed reading saved reports:', err);
@@ -59,7 +78,7 @@ export default function DashboardPage() {
 
   // Global Filter State
   const [filters, setFilters] = useState<FilterOptions>({
-    period: 'Mei – Desember 2026',
+    period: 'Mei – Agustus 2026',
     month: 'Semua Bulan',
     area: 'Semua Area',
     subArea: 'Semua Sub Area',
@@ -249,9 +268,9 @@ export default function DashboardPage() {
       }
     : { name: '-', score: 0, count: 0 };
 
-  // Trend line chart data calculation
+  // Trend line chart data calculation (only for months with real data)
   const monthlyTrendData = useMemo(() => {
-    const months = [
+    const allMonths = [
       'Mei 2026',
       'Juni 2026',
       'Juli 2026',
@@ -261,7 +280,10 @@ export default function DashboardPage() {
       'November 2026',
       'Desember 2026',
     ];
-    return months.map((m) => {
+    const activeMonths = allMonths.filter((m) => reports.some((r) => r.month === m));
+    const monthsToUse = activeMonths.length > 0 ? activeMonths : ['Mei 2026', 'Juni 2026', 'Juli 2026', 'Agustus 2026'];
+
+    return monthsToUse.map((m) => {
       const monthReps = reports.filter((r) => r.month === m);
       const total = monthReps.length || 1;
       const sum = monthReps.reduce((acc, r) => acc + r.qualityScore, 0);
@@ -304,7 +326,7 @@ export default function DashboardPage() {
   // Reset filters handler
   const handleResetFilters = () => {
     setFilters({
-      period: 'Mei – Desember 2026',
+      period: 'Mei – Agustus 2026',
       month: 'Semua Bulan',
       area: 'Semua Area',
       subArea: 'Semua Sub Area',
@@ -436,7 +458,7 @@ export default function DashboardPage() {
     setReports((prev) => {
       const updated = mode === 'replace' ? imported : [...imported, ...prev];
       if (typeof window !== 'undefined') {
-        localStorage.setItem('itu_hazard_reports_dec2026', JSON.stringify(updated));
+        localStorage.setItem('itu_hazard_reports_real_v1', JSON.stringify(updated));
       }
       return updated;
     });

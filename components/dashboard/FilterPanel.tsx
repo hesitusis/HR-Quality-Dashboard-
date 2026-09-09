@@ -42,7 +42,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
     filters.aiStatus !== 'Semua Status AI' ? 1 : 0,
   ].reduce((a, b) => a + b, 0);
 
-  const months = [
+  const allPossibleMonths = [
     { label: 'Semua Bulan', value: 'Semua Bulan', count: monthCounts['all'] || 0 },
     { label: 'Mei 2026', value: 'Mei 2026', count: monthCounts['Mei 2026'] || 0 },
     { label: 'Juni 2026', value: 'Juni 2026', count: monthCounts['Juni 2026'] || 0 },
@@ -54,17 +54,22 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
     { label: 'Desember 2026', value: 'Desember 2026', count: monthCounts['Desember 2026'] || 0 },
   ];
 
+  // Only display months that actually exist in the data (count > 0)
+  const months = allPossibleMonths.filter(
+    (m) => m.value === 'Semua Bulan' || (m.count && m.count > 0)
+  );
+
   const handleMonthChange = (monthValue: string) => {
     setFilters((prev) => ({
       ...prev,
       month: monthValue,
-      period: monthValue === 'Semua Bulan' ? 'Mei – Desember 2026' : monthValue,
+      period: monthValue === 'Semua Bulan' ? 'Mei – Agustus 2026' : monthValue,
     }));
   };
 
   const handleReset = () => {
     setFilters({
-      period: 'Mei – Desember 2026',
+      period: 'Mei – Agustus 2026',
       month: 'Semua Bulan',
       area: 'Semua Area',
       subArea: 'Semua Sub Area',

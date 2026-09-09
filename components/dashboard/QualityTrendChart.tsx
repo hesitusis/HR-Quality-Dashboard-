@@ -75,11 +75,11 @@ export const QualityTrendChart: React.FC<QualityTrendChartProps> = ({ data }) =>
         <div>
           <div className="flex items-center gap-2">
             <h3 className="text-sm font-bold text-slate-900 tracking-tight">
-              TREND QUALITY SCORE (Mei – Desember 2026)
+              TREND QUALITY SCORE ({data.length > 1 ? `${data[0]?.month.replace(' 2026', '')} – ${data[data.length - 1]?.month}` : (data[0]?.month || 'Periode Aktif')})
             </h3>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Perkembangan Average Quality Score, rasio Sesuai vs Tidak Sesuai per bulan (Mei s/d Desember 2026)
+            Perkembangan Average Quality Score, rasio Sesuai vs Tidak Sesuai per bulan ({data.length > 1 ? `${data[0]?.month} s/d ${data[data.length - 1]?.month}` : (data[0]?.month || 'Periode Aktif')})
           </p>
         </div>
 

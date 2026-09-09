@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import confetti from 'canvas-confetti';
 import {
   Trophy,
@@ -42,7 +42,20 @@ export const MonthlyReward: React.FC<MonthlyRewardProps> = ({
   onVerifyReport,
   onSetWinner,
 }) => {
-  const [selectedMonth, setSelectedMonth] = useState<MonthName>('Desember 2026');
+  // Only display months that have actual reports
+  const availableMonths = useMemo(() => {
+    const monthsSet = new Set(reports.map((r) => r.month));
+    const active = REWARD_MONTHS.filter((m) => monthsSet.has(m));
+    return active.length > 0 ? active : (['Agustus 2026'] as MonthName[]);
+  }, [reports]);
+
+  const latestMonth = availableMonths[availableMonths.length - 1] || 'Agustus 2026';
+  const [selectedMonthState, setSelectedMonth] = useState<MonthName | null>(null);
+  const selectedMonth: MonthName =
+    selectedMonthState && availableMonths.includes(selectedMonthState)
+      ? selectedMonthState
+      : latestMonth;
+
   const [showCertificate, setShowCertificate] = useState(false);
   const [verifyingReport, setVerifyingReport] = useState<HazardReport | null>(null);
   const [verifierName, setVerifierName] = useState('HSE Supervisor Site MIA 4');
@@ -112,7 +125,7 @@ export const MonthlyReward: React.FC<MonthlyRewardProps> = ({
 
         {/* Month Selector Tabs */}
         <div className="flex items-center gap-1.5 p-1 bg-amber-100/70 rounded-xl overflow-x-auto max-w-full pb-1 self-start md:self-auto">
-          {REWARD_MONTHS.map((m) => (
+          {availableMonths.map((m) => (
             <button
               key={m}
               id={`reward-month-${m.toLowerCase().replace(/\s+/g, '-')}`}
