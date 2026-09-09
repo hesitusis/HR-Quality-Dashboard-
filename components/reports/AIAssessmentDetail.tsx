@@ -314,6 +314,8 @@ Rekomendasi Perbaikan: ${currentReport.aiRecommendation}`;
                 temuan: currentReport.temuan,
                 risikoUtama: currentReport.risikoUtama,
                 kategoriTemuan: currentReport.kategoriTemuan,
+                kategoriBahaya: currentReport.kategoriBahaya,
+                levelRisiko: currentReport.levelRisiko,
                 aiFindings: currentReport.aiFindings,
               };
 
@@ -340,15 +342,15 @@ Rekomendasi Perbaikan: ${currentReport.aiRecommendation}`;
                 const guideText = `PANDUAN LAPORAN HAZARD STANDAR MUTU K3 (MENUJU SKOR 100%):
 1. LOKASI PRESISI (Maks 40 Poin):
    Format: [Area Utama] > [Sub Area / Fasilitas] > [Patokan Fisik Tetap / No. Bay / No. Unit / KM]
-   Rujukan: ${lokasiDetail.contohRujukan}
+   ${lokasiDetail.contohRujukan}
 
 2. OBJEK HAZARD (Maks 30 Poin):
    Format: [Nama Alat / Aktivitas] + [Komponen Spesifik yang Rusak] + [Wujud Kondisi Tidak Aman]
-   Rujukan: ${hazardDetail.contohRujukan}
+   ${hazardDetail.contohRujukan}
 
 3. UKURAN RISIKO (Maks 30 Poin):
    Format: [Pihak / Unit Terdampak] + [Mekanisme Celaka] + [Skenario Terburuk Sesuai 18 Risiko Utama]
-   Rujukan: ${risikoDetail.contohRujukan}`;
+   ${risikoDetail.contohRujukan}`;
 
                 navigator.clipboard.writeText(guideText).then(() => {
                   setCopiedGuide(true);
@@ -436,15 +438,20 @@ Rekomendasi Perbaikan: ${currentReport.aiRecommendation}`;
                           </div>
 
                           {/* Panduan Menuju 100% */}
-                          <div className="p-2.5 rounded-lg border border-emerald-200 bg-emerald-50/60 text-[11px] leading-relaxed text-emerald-950">
-                            <div className="font-bold flex items-center gap-1 mb-1 text-[10px] uppercase tracking-wide text-emerald-800">
-                              <Lightbulb className="w-3 h-3 text-emerald-600" />
-                              <span>Agar Menjadi 100% (Refrensi Pelapor):</span>
+                          <div className="p-2.5 rounded-lg border border-emerald-200 bg-emerald-50/60 text-[11px] leading-relaxed text-emerald-950 space-y-1.5">
+                            <div className="font-bold flex items-center justify-between gap-1 text-[10px] uppercase tracking-wide text-emerald-800">
+                              <div className="flex items-center gap-1">
+                                <Lightbulb className="w-3 h-3 text-emerald-600 shrink-0" />
+                                <span>Agar Menjadi 100% (Refrensi Pelapor):</span>
+                              </div>
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 font-sans tracking-normal">
+                                Relevan Laporan Ini
+                              </span>
                             </div>
-                            <p className="text-[11px] text-slate-700 font-medium mb-1.5">
+                            <p className="text-[11px] text-slate-700 font-medium">
                               {lokasiDetail.langkahMenuju100}
                             </p>
-                            <div className="text-[10px] bg-white p-2 rounded border border-emerald-200/80 font-mono text-emerald-900 break-words">
+                            <div className="text-[10px] bg-white p-2.5 rounded-md border border-emerald-200/90 font-mono text-emerald-950 break-words shadow-2xs">
                               {lokasiDetail.contohRujukan}
                             </div>
                           </div>
@@ -528,15 +535,20 @@ Rekomendasi Perbaikan: ${currentReport.aiRecommendation}`;
                           </div>
 
                           {/* Panduan Menuju 100% */}
-                          <div className="p-2.5 rounded-lg border border-emerald-200 bg-emerald-50/60 text-[11px] leading-relaxed text-emerald-950">
-                            <div className="font-bold flex items-center gap-1 mb-1 text-[10px] uppercase tracking-wide text-emerald-800">
-                              <Lightbulb className="w-3 h-3 text-emerald-600" />
-                              <span>Agar Menjadi 100% (Refrensi Pelapor):</span>
+                          <div className="p-2.5 rounded-lg border border-emerald-200 bg-emerald-50/60 text-[11px] leading-relaxed text-emerald-950 space-y-1.5">
+                            <div className="font-bold flex items-center justify-between gap-1 text-[10px] uppercase tracking-wide text-emerald-800">
+                              <div className="flex items-center gap-1">
+                                <Lightbulb className="w-3 h-3 text-emerald-600 shrink-0" />
+                                <span>Agar Menjadi 100% (Refrensi Pelapor):</span>
+                              </div>
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 font-sans tracking-normal">
+                                Relevan Laporan Ini
+                              </span>
                             </div>
-                            <p className="text-[11px] text-slate-700 font-medium mb-1.5">
+                            <p className="text-[11px] text-slate-700 font-medium">
                               {hazardDetail.langkahMenuju100}
                             </p>
-                            <div className="text-[10px] bg-white p-2 rounded border border-emerald-200/80 font-mono text-emerald-900 break-words">
+                            <div className="text-[10px] bg-white p-2.5 rounded-md border border-emerald-200/90 font-mono text-emerald-950 break-words shadow-2xs">
                               {hazardDetail.contohRujukan}
                             </div>
                           </div>
@@ -620,15 +632,20 @@ Rekomendasi Perbaikan: ${currentReport.aiRecommendation}`;
                           </div>
 
                           {/* Panduan Menuju 100% */}
-                          <div className="p-2.5 rounded-lg border border-emerald-200 bg-emerald-50/60 text-[11px] leading-relaxed text-emerald-950">
-                            <div className="font-bold flex items-center gap-1 mb-1 text-[10px] uppercase tracking-wide text-emerald-800">
-                              <Lightbulb className="w-3 h-3 text-emerald-600" />
-                              <span>Agar Menjadi 100% (Refrensi Pelapor):</span>
+                          <div className="p-2.5 rounded-lg border border-emerald-200 bg-emerald-50/60 text-[11px] leading-relaxed text-emerald-950 space-y-1.5">
+                            <div className="font-bold flex items-center justify-between gap-1 text-[10px] uppercase tracking-wide text-emerald-800">
+                              <div className="flex items-center gap-1">
+                                <Lightbulb className="w-3 h-3 text-emerald-600 shrink-0" />
+                                <span>Agar Menjadi 100% (Refrensi Pelapor):</span>
+                              </div>
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 font-sans tracking-normal">
+                                Relevan Laporan Ini
+                              </span>
                             </div>
-                            <p className="text-[11px] text-slate-700 font-medium mb-1.5">
+                            <p className="text-[11px] text-slate-700 font-medium">
                               {risikoDetail.langkahMenuju100}
                             </p>
-                            <div className="text-[10px] bg-white p-2 rounded border border-emerald-200/80 font-mono text-emerald-900 break-words">
+                            <div className="text-[10px] bg-white p-2.5 rounded-md border border-emerald-200/90 font-mono text-emerald-950 break-words shadow-2xs">
                               {risikoDetail.contohRujukan}
                             </div>
                           </div>
@@ -718,9 +735,13 @@ Rekomendasi Perbaikan: ${currentReport.aiRecommendation}`;
                               {lokasiDetail.isPerfect ? '100%' : `Kurang -${lokasiDetail.deduction}`}
                             </span>
                           </div>
-                          <p className="text-[11px] text-slate-600 leading-relaxed">
+                          <p className="text-[11px] text-slate-600 leading-relaxed mb-2">
                             Sebutkan titik acuan fisik permanen (nama ruangan, nomor bay, pilar, atau unit/KM) agar langsung dapat ditemukan tanpa perlu bertanya ulang.
                           </p>
+                          <div className="text-[10px] bg-emerald-50/70 p-2 rounded border border-emerald-200 font-mono text-emerald-950 break-words">
+                            <span className="font-bold text-emerald-800 font-sans block text-[9px] uppercase mb-0.5">Rujukan Laporan Ini:</span>
+                            {lokasiDetail.contohRujukan.replace(/^Rujukan Revisi 100% \(Khusus Laporan Ini\):\s*/i, '')}
+                          </div>
                         </div>
                       </div>
 
@@ -741,9 +762,13 @@ Rekomendasi Perbaikan: ${currentReport.aiRecommendation}`;
                               {hazardDetail.isPerfect ? '100%' : `Kurang -${hazardDetail.deduction}`}
                             </span>
                           </div>
-                          <p className="text-[11px] text-slate-600 leading-relaxed">
+                          <p className="text-[11px] text-slate-600 leading-relaxed mb-2">
                             Rinci komponen fisik yang bermasalah dan jenis kondisi tidak amannya (contoh: kabel terkelupas 4cm), hindari hanya menulis frasa umum seperti &quot;rusak&quot;.
                           </p>
+                          <div className="text-[10px] bg-amber-50/70 p-2 rounded border border-amber-200 font-mono text-amber-950 break-words">
+                            <span className="font-bold text-amber-800 font-sans block text-[9px] uppercase mb-0.5">Rujukan Laporan Ini:</span>
+                            {hazardDetail.contohRujukan.replace(/^Rujukan Revisi 100% \(Khusus Laporan Ini\):\s*/i, '')}
+                          </div>
                         </div>
                       </div>
 
@@ -764,9 +789,13 @@ Rekomendasi Perbaikan: ${currentReport.aiRecommendation}`;
                               {risikoDetail.isPerfect ? '100%' : `Kurang -${risikoDetail.deduction}`}
                             </span>
                           </div>
-                          <p className="text-[11px] text-slate-600 leading-relaxed">
+                          <p className="text-[11px] text-slate-600 leading-relaxed mb-2">
                             Jelaskan siapa pihak/unit yang berisiko terdampak serta mekanismenya, lalu selaraskan secara tepat dengan salah satu dari 18 Risiko Utama K3.
                           </p>
+                          <div className="text-[10px] bg-purple-50/70 p-2 rounded border border-purple-200 font-mono text-purple-950 break-words">
+                            <span className="font-bold text-purple-800 font-sans block text-[9px] uppercase mb-0.5">Rujukan Laporan Ini:</span>
+                            {risikoDetail.contohRujukan.replace(/^Rujukan Revisi 100% \(Khusus Laporan Ini\):\s*/i, '')}
+                          </div>
                         </div>
                       </div>
                     </div>
