@@ -683,6 +683,22 @@ export const MonthlyReward: React.FC<MonthlyRewardProps> = ({
                       <path d="M 64 26 C 74 26 74 42 63 43 C 66 39 67 30 62 28 Z" fill="#d97706" />
                       <polygon points="50,32 52,36 56.5,37 53,40 54,44.5 50,42 46,44.5 47,40 43.5,37 48,36" fill="#fef08a" />
                     </svg>
+
+                    {/* Gold Vertical Divider */}
+                    <div className="h-10 sm:h-12 w-[2px] bg-amber-400 shrink-0" />
+
+                    {/* Logo 4 Pilar a-ZAM */}
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center shrink-0">
+                      <Image
+                        src="/logo-4-pilar-a-zam.png"
+                        alt="Logo 4 Pilar a-ZAM"
+                        width={64}
+                        height={64}
+                        className="w-full h-full object-contain"
+                        referrerPolicy="no-referrer"
+                        priority
+                      />
+                    </div>
                   </div>
 
                   {/* Subtitle */}
