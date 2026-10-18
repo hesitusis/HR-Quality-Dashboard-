@@ -105,7 +105,7 @@ export const MonthlyReward: React.FC<MonthlyRewardProps> = ({
       <html>
         <head>
           <meta charset="utf-8" />
-          <title>Sertifikat Penghargaan K3 - ${currentWinner?.pelapor || 'Hazard Report'}</title>
+          <title>Sertifikat Penghargaan K3 "PELAPOR HAZARD REPORT BERKUALITAS" - ${currentWinner?.pelapor || 'Hazard Report'}</title>
           ${styleTags}
           <style>
             @page {
@@ -691,13 +691,18 @@ export const MonthlyReward: React.FC<MonthlyRewardProps> = ({
                   </div>
 
                   {/* Main Title */}
-                  <h3 className="text-2xl sm:text-3xl md:text-4xl font-black text-[#002855] tracking-tight text-center mb-2">
+                  <h3 className="text-2xl sm:text-3xl md:text-4xl font-black text-[#002855] tracking-tight text-center">
                     SERTIFIKAT PENGHARGAAN K3
                   </h3>
 
+                  {/* Award Category Subtitle */}
+                  <div className="text-sm sm:text-base md:text-lg font-bold text-[#002855] tracking-wide text-center mt-1 mb-2">
+                    &ldquo;PELAPOR HAZARD REPORT BERKUALITAS&rdquo;
+                  </div>
+
                   {/* Sub-narrative */}
                   <p className="text-xs sm:text-sm text-slate-600 text-center max-w-2xl sm:max-w-3xl mx-auto leading-relaxed mb-3">
-                    Diberikan atas pencapaian sebagai Pelapor Hazard Report Terbaik, berdasarkan kualitas identifikasi bahaya, ketepatan analisis risiko, dan relevansi rekomendasi pengendalian yang mendukung peningkatan keselamatan kerja :
+                    Diberikan atas pencapaian sebagai Pelapor Hazard Report Berkualitas, berdasarkan kualitas identifikasi bahaya, ketepatan analisis risiko, dan relevansi rekomendasi pengendalian yang mendukung peningkatan keselamatan kerja :
                   </p>
 
                   {/* Subtle Gold Accent Diamond */}
