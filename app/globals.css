@@ -1,1 +1,63 @@
 @import "tailwindcss";
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 5mm;
+  }
+  
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide regular UI elements when printing */
+  nav,
+  aside,
+  header,
+  footer,
+  .no-print,
+  #sidebar,
+  #header-navbar {
+    display: none !important;
+  }
+
+  /* Hide all dashboard content except monthly reward section during print */
+  main > div > *:not(#monthly-reward-section) {
+    display: none !important;
+  }
+
+  /* Reset outer container */
+  #monthly-reward-section {
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+
+  /* Clean up modal backdrop for print */
+  .certificate-modal-overlay {
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    backdrop-filter: none !important;
+  }
+
+  .certificate-print-sheet {
+    box-shadow: none !important;
+    border-radius: 18px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
