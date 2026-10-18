@@ -11,15 +11,17 @@
     padding: 0 !important;
     width: 100% !important;
     height: 100% !important;
+    min-height: 100% !important;
     background: #ffffff !important;
-    overflow: hidden !important;
+    overflow: visible !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     color-adjust: exact !important;
   }
 
-  /* CRITICAL: Completely hide all elements in body EXCEPT the certificate portal */
-  body > *:not(#certificate-print-portal) {
+  /* CRITICAL: When certificate portal is present, hide all other elements in body */
+  body:has(#certificate-print-portal) > *:not(#certificate-print-portal),
+  body.printing-certificate-only > *:not(#certificate-print-portal) {
     display: none !important;
     visibility: hidden !important;
     height: 0 !important;
@@ -33,18 +35,16 @@
   #certificate-print-portal {
     display: flex !important;
     visibility: visible !important;
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
+    position: static !important;
     width: 100% !important;
-    height: 100% !important;
+    min-height: 100vh !important;
     margin: 0 !important;
     padding: 0 !important;
     background: #ffffff !important;
-    z-index: 99999999 !important;
     align-items: center !important;
     justify-content: center !important;
     box-sizing: border-box !important;
+    overflow: visible !important;
   }
 
   #certificate-print-portal .no-print,
@@ -58,7 +58,7 @@
     background: #ffffff !important;
     padding: 0 !important;
     width: 100% !important;
-    height: 100% !important;
+    min-height: 100vh !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -76,5 +76,7 @@
     break-inside: avoid !important;
     page-break-after: avoid !important;
     page-break-before: avoid !important;
+    background: #ffffff !important;
+    border: 2.5px solid #002855 !important;
   }
 }
