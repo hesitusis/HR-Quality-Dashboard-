@@ -61,10 +61,144 @@ export const MonthlyReward: React.FC<MonthlyRewardProps> = ({
       : latestMonth;
 
   const handlePrintCertificate = () => {
-    if (typeof document !== 'undefined') {
-      document.body.classList.add('printing-certificate-only');
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+
+    const certElement = document.getElementById('printable-certificate');
+    if (!certElement) {
+      window.print();
+      return;
     }
-    window.print();
+
+    // Remove any previous print iframe
+    const oldIframe = document.getElementById('certificate-print-iframe');
+    if (oldIframe) {
+      oldIframe.remove();
+    }
+
+    // Create an isolated hidden iframe containing ONLY the certificate
+    const iframe = document.createElement('iframe');
+    iframe.id = 'certificate-print-iframe';
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    iframe.style.visibility = 'hidden';
+    iframe.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(iframe);
+
+    const iframeDoc = iframe.contentWindow?.document;
+    if (!iframeDoc) {
+      window.print();
+      return;
+    }
+
+    // Collect all stylesheets and style elements to carry over typography and Tailwind styling
+    const styleTags = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+      .map((el) => el.outerHTML)
+      .join('\n');
+
+    iframeDoc.open();
+    iframeDoc.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Sertifikat Penghargaan K3 - ${currentWinner?.pelapor || 'Hazard Report'}</title>
+          ${styleTags}
+          <style>
+            @page {
+              size: A4 landscape;
+              margin: 4mm;
+            }
+            html, body {
+              margin: 0 !important;
+              padding: 0 !important;
+              background: #ffffff !important;
+              width: 100% !important;
+              min-height: 100% !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+              color-adjust: exact !important;
+            }
+            .print-wrapper {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              width: 100%;
+              min-height: 100vh;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            .certificate-print-sheet {
+              width: 100% !important;
+              max-width: 285mm !important;
+              margin: 0 auto !important;
+              box-shadow: none !important;
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+            }
+            .no-print {
+              display: none !important;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="print-wrapper">
+            ${certElement.outerHTML}
+          </div>
+        </body>
+      </html>
+    `);
+    iframeDoc.close();
+
+    const doPrint = () => {
+      try {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+      } catch (err) {
+        console.error('Iframe print error, falling back to window.print():', err);
+        window.print();
+      }
+      setTimeout(() => {
+        iframe.remove();
+      }, 5000);
+    };
+
+    // Ensure images inside the certificate iframe are loaded before printing
+    const imgs = iframeDoc.querySelectorAll('img');
+    if (imgs.length === 0) {
+      setTimeout(doPrint, 250);
+    } else {
+      let loaded = 0;
+      const total = imgs.length;
+      let printTriggered = false;
+      const onImageReady = () => {
+        loaded++;
+        if (loaded >= total && !printTriggered) {
+          printTriggered = true;
+          setTimeout(doPrint, 250);
+        }
+      };
+
+      imgs.forEach((img) => {
+        if (img.complete && img.naturalHeight !== 0) {
+          onImageReady();
+        } else {
+          img.onload = onImageReady;
+          img.onerror = onImageReady;
+        }
+      });
+
+      // Safety timeout in case image load event is delayed
+      setTimeout(() => {
+        if (!printTriggered) {
+          printTriggered = true;
+          doPrint();
+        }
+      }, 1000);
+    }
   };
 
   useEffect(() => {
@@ -562,8 +696,8 @@ export const MonthlyReward: React.FC<MonthlyRewardProps> = ({
                   </h3>
 
                   {/* Sub-narrative */}
-                  <p className="text-xs sm:text-sm text-slate-600 text-center max-w-xl mx-auto leading-relaxed mb-3">
-                    Diberikan sebagai pengakuan atas dedikasi dan kualitas pelaporan bahaya keselamatan kerja terbaik:
+                  <p className="text-xs sm:text-sm text-slate-600 text-center max-w-2xl sm:max-w-3xl mx-auto leading-relaxed mb-3">
+                    Diberikan atas pencapaian sebagai Pelapor Hazard Report Terbaik, berdasarkan kualitas identifikasi bahaya, ketepatan analisis risiko, dan relevansi rekomendasi pengendalian yang mendukung peningkatan keselamatan kerja :
                   </p>
 
                   {/* Subtle Gold Accent Diamond */}

@@ -3,7 +3,7 @@
 @media print {
   @page {
     size: A4 landscape;
-    margin: 5mm;
+    margin: 4mm;
   }
   
   html, body {
@@ -47,14 +47,15 @@
     box-sizing: border-box !important;
   }
 
-  #certificate-print-portal .no-print {
+  #certificate-print-portal .no-print,
+  .no-print {
     display: none !important;
     visibility: hidden !important;
   }
 
   #certificate-print-portal .certificate-modal-overlay {
     position: static !important;
-    background: transparent !important;
+    background: #ffffff !important;
     padding: 0 !important;
     width: 100% !important;
     height: 100% !important;
@@ -62,13 +63,14 @@
     align-items: center !important;
     justify-content: center !important;
     backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
     overflow: visible !important;
   }
 
   #certificate-print-portal .certificate-print-sheet {
     box-shadow: none !important;
     width: 100% !important;
-    max-width: 280mm !important;
+    max-width: 285mm !important;
     margin: 0 auto !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
