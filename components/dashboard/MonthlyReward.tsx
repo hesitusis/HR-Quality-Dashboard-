@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import confetti from 'canvas-confetti';
 import {
@@ -58,6 +59,23 @@ export const MonthlyReward: React.FC<MonthlyRewardProps> = ({
     selectedMonthState && availableMonths.includes(selectedMonthState)
       ? selectedMonthState
       : latestMonth;
+
+  const handlePrintCertificate = () => {
+    if (typeof document !== 'undefined') {
+      document.body.classList.add('printing-certificate-only');
+    }
+    window.print();
+  };
+
+  useEffect(() => {
+    const handleAfterPrint = () => {
+      if (typeof document !== 'undefined') {
+        document.body.classList.remove('printing-certificate-only');
+      }
+    };
+    window.addEventListener('afterprint', handleAfterPrint);
+    return () => window.removeEventListener('afterprint', handleAfterPrint);
+  }, []);
 
   const [showCertificate, setShowCertificate] = useState(false);
   const [verifyingReport, setVerifyingReport] = useState<HazardReport | null>(null);
@@ -391,242 +409,243 @@ export const MonthlyReward: React.FC<MonthlyRewardProps> = ({
         </div>
       )}
 
-      {/* Certificate Modal Preview */}
-      {showCertificate && currentWinner && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 p-3 sm:p-6 overflow-y-auto backdrop-blur-xs certificate-modal-overlay">
-          <div className="relative max-w-4xl w-full my-auto flex flex-col items-center">
-            {/* Certificate Card (Screen Preview & Printable Sheet) */}
-            <div
-              id="printable-certificate"
-              className="certificate-print-sheet w-full bg-white rounded-2xl sm:rounded-3xl border-[2.5px] border-[#002855] p-2 sm:p-2.5 shadow-2xl relative overflow-hidden"
-            >
-              {/* Corner Geometric Decorations matching Image 2 */}
-              {/* Top-Left Geometric Decor */}
-              <svg
-                className="absolute top-0 left-0 w-36 h-36 sm:w-52 sm:h-52 pointer-events-none z-10"
-                viewBox="0 0 200 200"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
+      {/* Certificate Modal Preview (Portaled directly to document.body so print ONLY captures certificate) */}
+      {typeof document !== 'undefined' && showCertificate && currentWinner && createPortal(
+        <div id="certificate-print-portal">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 p-3 sm:p-6 overflow-y-auto backdrop-blur-xs certificate-modal-overlay">
+            <div className="relative max-w-4xl w-full my-auto flex flex-col items-center">
+              {/* Certificate Card (Screen Preview & Printable Sheet) */}
+              <div
+                id="printable-certificate"
+                className="certificate-print-sheet w-full bg-white rounded-2xl sm:rounded-3xl border-[2.5px] border-[#002855] p-2 sm:p-2.5 shadow-2xl relative overflow-hidden"
               >
-                <polygon points="0,0 200,0 0,200" fill="#e0f2fe" opacity="0.75" />
-                <polygon points="0,0 160,0 0,160" fill="#bae6fd" opacity="0.65" />
-                <polygon points="0,140 140,0 170,0 0,170" fill="#002855" />
-                <polygon points="0,105 105,0 132,0 0,132" fill="#f59e0b" />
-                <polygon points="0,0 90,0 0,90" fill="#002855" />
-                <polygon points="0,0 60,0 0,60" fill="#001838" />
-              </svg>
+                {/* Corner Geometric Decorations matching Image 2 */}
+                {/* Top-Left Geometric Decor */}
+                <svg
+                  className="absolute top-0 left-0 w-36 h-36 sm:w-52 sm:h-52 pointer-events-none z-10"
+                  viewBox="0 0 200 200"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <polygon points="0,0 200,0 0,200" fill="#e0f2fe" opacity="0.75" />
+                  <polygon points="0,0 160,0 0,160" fill="#bae6fd" opacity="0.65" />
+                  <polygon points="0,140 140,0 170,0 0,170" fill="#002855" />
+                  <polygon points="0,105 105,0 132,0 0,132" fill="#f59e0b" />
+                  <polygon points="0,0 90,0 0,90" fill="#002855" />
+                  <polygon points="0,0 60,0 0,60" fill="#001838" />
+                </svg>
 
-              {/* Bottom-Right Geometric Decor (Mirrored) */}
-              <svg
-                className="absolute bottom-0 right-0 w-36 h-36 sm:w-52 sm:h-52 pointer-events-none z-10 rotate-180"
-                viewBox="0 0 200 200"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <polygon points="0,0 200,0 0,200" fill="#e0f2fe" opacity="0.75" />
-                <polygon points="0,0 160,0 0,160" fill="#bae6fd" opacity="0.65" />
-                <polygon points="0,140 140,0 170,0 0,170" fill="#002855" />
-                <polygon points="0,105 105,0 132,0 0,132" fill="#f59e0b" />
-                <polygon points="0,0 90,0 0,90" fill="#002855" />
-                <polygon points="0,0 60,0 0,60" fill="#001838" />
-              </svg>
+                {/* Bottom-Right Geometric Decor (Mirrored) */}
+                <svg
+                  className="absolute bottom-0 right-0 w-36 h-36 sm:w-52 sm:h-52 pointer-events-none z-10 rotate-180"
+                  viewBox="0 0 200 200"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <polygon points="0,0 200,0 0,200" fill="#e0f2fe" opacity="0.75" />
+                  <polygon points="0,0 160,0 0,160" fill="#bae6fd" opacity="0.65" />
+                  <polygon points="0,140 140,0 170,0 0,170" fill="#002855" />
+                  <polygon points="0,105 105,0 132,0 0,132" fill="#f59e0b" />
+                  <polygon points="0,0 90,0 0,90" fill="#002855" />
+                  <polygon points="0,0 60,0 0,60" fill="#001838" />
+                </svg>
 
-              {/* Top-Right Soft Accent */}
-              <svg
-                className="absolute top-0 right-0 w-28 h-28 sm:w-40 sm:h-40 pointer-events-none z-10"
-                viewBox="0 0 140 140"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <polygon points="140,0 0,0 140,140" fill="#f0f9ff" opacity="0.6" />
-                <polygon points="140,0 50,0 140,90" fill="#e0f2fe" opacity="0.55" />
-                <polygon points="140,0 90,0 140,50" fill="#bae6fd" opacity="0.5" />
-              </svg>
+                {/* Top-Right Soft Accent */}
+                <svg
+                  className="absolute top-0 right-0 w-28 h-28 sm:w-40 sm:h-40 pointer-events-none z-10"
+                  viewBox="0 0 140 140"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <polygon points="140,0 0,0 140,140" fill="#f0f9ff" opacity="0.6" />
+                  <polygon points="140,0 50,0 140,90" fill="#e0f2fe" opacity="0.55" />
+                  <polygon points="140,0 90,0 140,50" fill="#bae6fd" opacity="0.5" />
+                </svg>
 
-              {/* Bottom-Left Soft Accent */}
-              <svg
-                className="absolute bottom-0 left-0 w-28 h-28 sm:w-40 sm:h-40 pointer-events-none z-10 rotate-180"
-                viewBox="0 0 140 140"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <polygon points="140,0 0,0 140,140" fill="#f0f9ff" opacity="0.6" />
-                <polygon points="140,0 50,0 140,90" fill="#e0f2fe" opacity="0.55" />
-                <polygon points="140,0 90,0 140,50" fill="#bae6fd" opacity="0.5" />
-              </svg>
+                {/* Bottom-Left Soft Accent */}
+                <svg
+                  className="absolute bottom-0 left-0 w-28 h-28 sm:w-40 sm:h-40 pointer-events-none z-10 rotate-180"
+                  viewBox="0 0 140 140"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <polygon points="140,0 0,0 140,140" fill="#f0f9ff" opacity="0.6" />
+                  <polygon points="140,0 50,0 140,90" fill="#e0f2fe" opacity="0.55" />
+                  <polygon points="140,0 90,0 140,50" fill="#bae6fd" opacity="0.5" />
+                </svg>
 
-              {/* Inner Fine Border Frame */}
-              <div className="relative z-20 rounded-xl sm:rounded-2xl border border-[#002855]/70 p-6 sm:p-8 md:p-9 bg-white/95 overflow-hidden">
-                {/* Header: Company Logo & Golden Trophy with Laurel Wreath */}
-                <div className="flex items-center justify-center gap-3 sm:gap-4 mb-2">
-                  {/* PT Indotruck Utama Logo */}
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center shrink-0">
-                    <Image
-                      src="/logo.png"
-                      alt="PT Indotruck Utama Logo"
-                      width={64}
-                      height={64}
-                      className="w-full h-full object-contain"
-                      referrerPolicy="no-referrer"
-                      priority
-                    />
-                  </div>
-
-                  {/* Gold Vertical Divider */}
-                  <div className="h-10 sm:h-12 w-[2px] bg-amber-400 shrink-0" />
-
-                  {/* Golden Trophy with Laurel Wreath SVG */}
-                  <svg
-                    viewBox="0 0 100 80"
-                    className="w-16 h-13 sm:w-20 sm:h-16 shrink-0"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    {/* Left Laurel Wreath */}
-                    <g>
-                      <path
-                        d="M 30 62 C 16 52 14 30 26 14"
-                        stroke="#d97706"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        fill="none"
+                {/* Inner Fine Border Frame */}
+                <div className="relative z-20 rounded-xl sm:rounded-2xl border border-[#002855]/70 p-6 sm:p-8 md:p-9 bg-white/95 overflow-hidden">
+                  {/* Header: Company Logo & Golden Trophy with Laurel Wreath */}
+                  <div className="flex items-center justify-center gap-3 sm:gap-4 mb-2">
+                    {/* PT Indotruck Utama Logo */}
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center shrink-0">
+                      <Image
+                        src="/logo.png"
+                        alt="PT Indotruck Utama Logo"
+                        width={64}
+                        height={64}
+                        className="w-full h-full object-contain"
+                        referrerPolicy="no-referrer"
+                        priority
                       />
-                      <ellipse cx="18" cy="52" rx="5" ry="3" transform="rotate(-30 18 52)" fill="#f59e0b" />
-                      <ellipse cx="14" cy="40" rx="5.5" ry="3" transform="rotate(-15 14 40)" fill="#f59e0b" />
-                      <ellipse cx="16" cy="28" rx="5.5" ry="3" transform="rotate(10 16 28)" fill="#f59e0b" />
-                      <ellipse cx="25" cy="18" rx="5" ry="2.8" transform="rotate(35 25 18)" fill="#fbbf24" />
-                      <ellipse cx="28" cy="57" rx="4.5" ry="2.5" transform="rotate(-40 28 57)" fill="#d97706" />
-                      <ellipse cx="24" cy="45" rx="4.8" ry="2.5" transform="rotate(-20 24 45)" fill="#d97706" />
-                      <ellipse cx="24" cy="33" rx="4.8" ry="2.5" transform="rotate(0 24 33)" fill="#d97706" />
-                    </g>
+                    </div>
 
-                    {/* Right Laurel Wreath */}
-                    <g>
-                      <path
-                        d="M 70 62 C 84 52 86 30 74 14"
-                        stroke="#d97706"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        fill="none"
-                      />
-                      <ellipse cx="82" cy="52" rx="5" ry="3" transform="rotate(30 82 52)" fill="#f59e0b" />
-                      <ellipse cx="86" cy="40" rx="5.5" ry="3" transform="rotate(15 86 40)" fill="#f59e0b" />
-                      <ellipse cx="84" cy="28" rx="5.5" ry="3" transform="rotate(-10 84 28)" fill="#f59e0b" />
-                      <ellipse cx="75" cy="18" rx="5" ry="2.8" transform="rotate(-35 75 18)" fill="#fbbf24" />
-                      <ellipse cx="72" cy="57" rx="4.5" ry="2.5" transform="rotate(40 72 57)" fill="#d97706" />
-                      <ellipse cx="76" cy="45" rx="4.8" ry="2.5" transform="rotate(20 76 45)" fill="#d97706" />
-                      <ellipse cx="76" cy="33" rx="4.8" ry="2.5" transform="rotate(0 76 33)" fill="#d97706" />
-                    </g>
+                    {/* Gold Vertical Divider */}
+                    <div className="h-10 sm:h-12 w-[2px] bg-amber-400 shrink-0" />
 
-                    {/* Trophy Cup */}
-                    <rect x="42" y="66" width="16" height="5" rx="1.5" fill="#b45309" />
-                    <path d="M 40 71 L 60 71 L 58 76 L 42 76 Z" fill="#d97706" />
-                    <rect x="37" y="76" width="26" height="4" rx="1.5" fill="#92400e" />
-                    <path d="M 47 52 L 53 52 L 52 66 L 48 66 Z" fill="#f59e0b" />
-                    <path d="M 35 22 L 65 22 L 62 46 C 62 54 56 58 50 58 C 44 58 38 54 38 46 Z" fill="#f59e0b" />
-                    <ellipse cx="50" cy="22" rx="15" ry="3" fill="#fbbf24" />
-                    <path d="M 41 27 L 46 27 C 46 41 47 48 50 53 C 45 52 41 46 41 36 Z" fill="#fef08a" opacity="0.65" />
-                    <path d="M 36 26 C 26 26 26 42 37 43 C 34 39 33 30 38 28 Z" fill="#d97706" />
-                    <path d="M 64 26 C 74 26 74 42 63 43 C 66 39 67 30 62 28 Z" fill="#d97706" />
-                    <polygon points="50,32 52,36 56.5,37 53,40 54,44.5 50,42 46,44.5 47,40 43.5,37 48,36" fill="#fef08a" />
-                  </svg>
-                </div>
+                    {/* Golden Trophy with Laurel Wreath SVG */}
+                    <svg
+                      viewBox="0 0 100 80"
+                      className="w-16 h-13 sm:w-20 sm:h-16 shrink-0"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      {/* Left Laurel Wreath */}
+                      <g>
+                        <path
+                          d="M 30 62 C 16 52 14 30 26 14"
+                          stroke="#d97706"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          fill="none"
+                        />
+                        <ellipse cx="18" cy="52" rx="5" ry="3" transform="rotate(-30 18 52)" fill="#f59e0b" />
+                        <ellipse cx="14" cy="40" rx="5.5" ry="3" transform="rotate(-15 14 40)" fill="#f59e0b" />
+                        <ellipse cx="16" cy="28" rx="5.5" ry="3" transform="rotate(10 16 28)" fill="#f59e0b" />
+                        <ellipse cx="25" cy="18" rx="5" ry="2.8" transform="rotate(35 25 18)" fill="#fbbf24" />
+                        <ellipse cx="28" cy="57" rx="4.5" ry="2.5" transform="rotate(-40 28 57)" fill="#d97706" />
+                        <ellipse cx="24" cy="45" rx="4.8" ry="2.5" transform="rotate(-20 24 45)" fill="#d97706" />
+                        <ellipse cx="24" cy="33" rx="4.8" ry="2.5" transform="rotate(0 24 33)" fill="#d97706" />
+                      </g>
 
-                {/* Subtitle */}
-                <div className="text-xs sm:text-sm font-bold uppercase tracking-[0.2em] text-[#002855] text-center mb-1">
-                  PT INDOTRUCK UTAMA &bull; SITE SISADMO
-                </div>
+                      {/* Right Laurel Wreath */}
+                      <g>
+                        <path
+                          d="M 70 62 C 84 52 86 30 74 14"
+                          stroke="#d97706"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          fill="none"
+                        />
+                        <ellipse cx="82" cy="52" rx="5" ry="3" transform="rotate(30 82 52)" fill="#f59e0b" />
+                        <ellipse cx="86" cy="40" rx="5.5" ry="3" transform="rotate(15 86 40)" fill="#f59e0b" />
+                        <ellipse cx="84" cy="28" rx="5.5" ry="3" transform="rotate(-10 84 28)" fill="#f59e0b" />
+                        <ellipse cx="75" cy="18" rx="5" ry="2.8" transform="rotate(-35 75 18)" fill="#fbbf24" />
+                        <ellipse cx="72" cy="57" rx="4.5" ry="2.5" transform="rotate(40 72 57)" fill="#d97706" />
+                        <ellipse cx="76" cy="45" rx="4.8" ry="2.5" transform="rotate(20 76 45)" fill="#d97706" />
+                        <ellipse cx="76" cy="33" rx="4.8" ry="2.5" transform="rotate(0 76 33)" fill="#d97706" />
+                      </g>
 
-                {/* Main Title */}
-                <h3 className="text-2xl sm:text-3xl md:text-4xl font-black text-[#002855] tracking-tight text-center mb-2">
-                  SERTIFIKAT PENGHARGAAN K3
-                </h3>
-
-                {/* Sub-narrative */}
-                <p className="text-xs sm:text-sm text-slate-600 text-center max-w-xl mx-auto leading-relaxed mb-3">
-                  Diberikan sebagai pengakuan atas dedikasi dan kualitas pelaporan bahaya keselamatan kerja terbaik:
-                </p>
-
-                {/* Subtle Gold Accent Diamond */}
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <div className="w-1.5 h-1.5 rotate-45 bg-amber-500" />
-                </div>
-
-                {/* Recipient Name */}
-                <div className="text-2xl sm:text-3xl md:text-4xl font-black text-[#002855] uppercase tracking-wide text-center">
-                  {currentWinner.pelapor}
-                </div>
-
-                {/* NRP & Company */}
-                <div className="text-xs sm:text-sm font-semibold text-slate-700 text-center mt-1 mb-2">
-                  NRP: {currentWinner.nrpPelapor} &bull; {currentWinner.perusahaanPelapor}
-                </div>
-
-                {/* Gold Horizontal Rule */}
-                <div className="w-full border-b border-amber-400 mb-4" />
-
-                {/* Report Detail Box with Gold Border & Aligned Colons */}
-                <div className="rounded-xl border border-amber-400/90 bg-white/95 p-3.5 sm:p-4 text-xs sm:text-sm space-y-1.5 mb-5 shadow-2xs">
-                  <div className="grid grid-cols-[100px_16px_1fr] sm:grid-cols-[125px_16px_1fr] items-start">
-                    <span className="font-bold text-[#002855]">Laporan</span>
-                    <span className="font-bold text-[#002855]">:</span>
-                    <span className="text-slate-800 font-mono">#{currentWinner.noHazardReport}</span>
+                      {/* Trophy Cup */}
+                      <rect x="42" y="66" width="16" height="5" rx="1.5" fill="#b45309" />
+                      <path d="M 40 71 L 60 71 L 58 76 L 42 76 Z" fill="#d97706" />
+                      <rect x="37" y="76" width="26" height="4" rx="1.5" fill="#92400e" />
+                      <path d="M 47 52 L 53 52 L 52 66 L 48 66 Z" fill="#f59e0b" />
+                      <path d="M 35 22 L 65 22 L 62 46 C 62 54 56 58 50 58 C 44 58 38 54 38 46 Z" fill="#f59e0b" />
+                      <ellipse cx="50" cy="22" rx="15" ry="3" fill="#fbbf24" />
+                      <path d="M 41 27 L 46 27 C 46 41 47 48 50 53 C 45 52 41 46 41 36 Z" fill="#fef08a" opacity="0.65" />
+                      <path d="M 36 26 C 26 26 26 42 37 43 C 34 39 33 30 38 28 Z" fill="#d97706" />
+                      <path d="M 64 26 C 74 26 74 42 63 43 C 66 39 67 30 62 28 Z" fill="#d97706" />
+                      <polygon points="50,32 52,36 56.5,37 53,40 54,44.5 50,42 46,44.5 47,40 43.5,37 48,36" fill="#fef08a" />
+                    </svg>
                   </div>
-                  <div className="grid grid-cols-[100px_16px_1fr] sm:grid-cols-[125px_16px_1fr] items-start">
-                    <span className="font-bold text-[#002855]">Temuan</span>
-                    <span className="font-bold text-[#002855]">:</span>
-                    <span className="text-slate-800 leading-snug">{currentWinner.temuan}</span>
-                  </div>
-                  <div className="grid grid-cols-[100px_16px_1fr] sm:grid-cols-[125px_16px_1fr] items-start">
-                    <span className="font-bold text-[#002855]">Lokasi</span>
-                    <span className="font-bold text-[#002855]">:</span>
-                    <span className="text-slate-800">{currentWinner.lokasi} ({currentWinner.area})</span>
-                  </div>
-                  <div className="grid grid-cols-[100px_16px_1fr] sm:grid-cols-[125px_16px_1fr] items-start">
-                    <span className="font-bold text-[#002855]">Quality Score</span>
-                    <span className="font-bold text-[#002855]">:</span>
-                    <span className="text-slate-800 font-semibold">{currentWinner.qualityScore} / 100 (Status: SESUAI)</span>
-                  </div>
-                  <div className="grid grid-cols-[100px_16px_1fr] sm:grid-cols-[125px_16px_1fr] items-start">
-                    <span className="font-bold text-[#002855]">Periode</span>
-                    <span className="font-bold text-[#002855]">:</span>
-                    <span className="text-slate-800">{selectedMonth}</span>
-                  </div>
-                </div>
 
-                {/* Footer Signatures */}
-                <div className="flex items-end justify-between text-xs sm:text-sm pt-2">
-                  <div className="text-left">
-                    <div className="font-bold text-[#002855] text-sm sm:text-base">Verifikator HSE</div>
-                    <div className="flex items-center gap-1 text-emerald-700 font-semibold text-xs sm:text-sm mt-0.5">
-                      <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
-                      <span>Terverifikasi Lapangan</span>
+                  {/* Subtitle */}
+                  <div className="text-xs sm:text-sm font-bold uppercase tracking-[0.2em] text-[#002855] text-center mb-1">
+                    PT INDOTRUCK UTAMA &bull; SITE SISADMO
+                  </div>
+
+                  {/* Main Title */}
+                  <h3 className="text-2xl sm:text-3xl md:text-4xl font-black text-[#002855] tracking-tight text-center mb-2">
+                    SERTIFIKAT PENGHARGAAN K3
+                  </h3>
+
+                  {/* Sub-narrative */}
+                  <p className="text-xs sm:text-sm text-slate-600 text-center max-w-xl mx-auto leading-relaxed mb-3">
+                    Diberikan sebagai pengakuan atas dedikasi dan kualitas pelaporan bahaya keselamatan kerja terbaik:
+                  </p>
+
+                  {/* Subtle Gold Accent Diamond */}
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <div className="w-1.5 h-1.5 rotate-45 bg-amber-500" />
+                  </div>
+
+                  {/* Recipient Name */}
+                  <div className="text-2xl sm:text-3xl md:text-4xl font-black text-[#002855] uppercase tracking-wide text-center">
+                    {currentWinner.pelapor}
+                  </div>
+
+                  {/* NRP & Company */}
+                  <div className="text-xs sm:text-sm font-semibold text-slate-700 text-center mt-1 mb-2">
+                    NRP: {currentWinner.nrpPelapor} &bull; {currentWinner.perusahaanPelapor}
+                  </div>
+
+                  {/* Gold Horizontal Rule */}
+                  <div className="w-full border-b border-amber-400 mb-4" />
+
+                  {/* Report Detail Box with Gold Border & Aligned Colons */}
+                  <div className="rounded-xl border border-amber-400/90 bg-white/95 p-3.5 sm:p-4 text-xs sm:text-sm space-y-1.5 mb-5 shadow-2xs">
+                    <div className="grid grid-cols-[100px_16px_1fr] sm:grid-cols-[125px_16px_1fr] items-start">
+                      <span className="font-bold text-[#002855]">Laporan</span>
+                      <span className="font-bold text-[#002855]">:</span>
+                      <span className="text-slate-800 font-mono">#{currentWinner.noHazardReport}</span>
+                    </div>
+                    <div className="grid grid-cols-[100px_16px_1fr] sm:grid-cols-[125px_16px_1fr] items-start">
+                      <span className="font-bold text-[#002855]">Temuan</span>
+                      <span className="font-bold text-[#002855]">:</span>
+                      <span className="text-slate-800 leading-snug">{currentWinner.temuan}</span>
+                    </div>
+                    <div className="grid grid-cols-[100px_16px_1fr] sm:grid-cols-[125px_16px_1fr] items-start">
+                      <span className="font-bold text-[#002855]">Lokasi</span>
+                      <span className="font-bold text-[#002855]">:</span>
+                      <span className="text-slate-800">{currentWinner.lokasi} ({currentWinner.area})</span>
+                    </div>
+                    <div className="grid grid-cols-[100px_16px_1fr] sm:grid-cols-[125px_16px_1fr] items-start">
+                      <span className="font-bold text-[#002855]">Quality Score</span>
+                      <span className="font-bold text-[#002855]">:</span>
+                      <span className="text-slate-800 font-semibold">{currentWinner.qualityScore} / 100 (Status: SESUAI)</span>
+                    </div>
+                    <div className="grid grid-cols-[100px_16px_1fr] sm:grid-cols-[125px_16px_1fr] items-start">
+                      <span className="font-bold text-[#002855]">Periode</span>
+                      <span className="font-bold text-[#002855]">:</span>
+                      <span className="text-slate-800">{selectedMonth}</span>
+                    </div>
+                  </div>
+
+                  {/* Footer Signatures */}
+                  <div className="flex items-end justify-between text-xs sm:text-sm pt-2">
+                    <div className="text-left">
+                      <div className="font-bold text-[#002855] text-sm sm:text-base">Verifikator HSE</div>
+                      <div className="flex items-center gap-1 text-emerald-700 font-semibold text-xs sm:text-sm mt-0.5">
+                        <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
+                        <span>Terverifikasi Lapangan</span>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Modal Actions (Hidden during print) */}
-            <div className="no-print mt-4 w-full flex items-center justify-end gap-2.5">
-              <button
-                onClick={() => setShowCertificate(false)}
-                className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 rounded-lg border border-slate-300 transition-colors shadow-xs"
-              >
-                Tutup
-              </button>
-              <button
-                onClick={() => {
-                  window.print();
-                }}
-                className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition-all flex items-center gap-2"
-              >
-                <Printer className="w-4 h-4" />
-                <span>Cetak Sertifikat</span>
-              </button>
+              {/* Modal Actions (Hidden during print) */}
+              <div className="no-print mt-4 w-full flex items-center justify-end gap-2.5">
+                <button
+                  onClick={() => setShowCertificate(false)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 rounded-lg border border-slate-300 transition-colors shadow-xs"
+                >
+                  Tutup
+                </button>
+                <button
+                  onClick={handlePrintCertificate}
+                  className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition-all flex items-center gap-2"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>Cetak Sertifikat</span>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

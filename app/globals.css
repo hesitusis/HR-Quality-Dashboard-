@@ -9,55 +9,70 @@
   html, body {
     margin: 0 !important;
     padding: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
     background: #ffffff !important;
+    overflow: hidden !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    color-adjust: exact !important;
   }
 
-  /* Hide regular UI elements when printing */
-  nav,
-  aside,
-  header,
-  footer,
-  .no-print,
-  #sidebar,
-  #header-navbar {
+  /* CRITICAL: Completely hide all elements in body EXCEPT the certificate portal */
+  body > *:not(#certificate-print-portal) {
     display: none !important;
-  }
-
-  /* Hide all dashboard content except monthly reward section during print */
-  main > div > *:not(#monthly-reward-section) {
-    display: none !important;
-  }
-
-  /* Reset outer container */
-  #monthly-reward-section {
-    border: none !important;
-    background: transparent !important;
-    padding: 0 !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
     margin: 0 !important;
-    box-shadow: none !important;
+    padding: 0 !important;
   }
 
-  /* Clean up modal backdrop for print */
-  .certificate-modal-overlay {
+  /* Certificate Portal is the ONLY element visible in print */
+  #certificate-print-portal {
+    display: flex !important;
+    visibility: visible !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    z-index: 99999999 !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+  }
+
+  #certificate-print-portal .no-print {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  #certificate-print-portal .certificate-modal-overlay {
     position: static !important;
     background: transparent !important;
     padding: 0 !important;
-    display: block !important;
     width: 100% !important;
-    height: auto !important;
-    overflow: visible !important;
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     backdrop-filter: none !important;
+    overflow: visible !important;
   }
 
-  .certificate-print-sheet {
+  #certificate-print-portal .certificate-print-sheet {
     box-shadow: none !important;
-    border-radius: 18px !important;
     width: 100% !important;
-    max-width: 100% !important;
+    max-width: 280mm !important;
     margin: 0 auto !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
+    page-break-after: avoid !important;
+    page-break-before: avoid !important;
   }
 }
