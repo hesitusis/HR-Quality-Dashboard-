@@ -40,36 +40,51 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
     filters.levelRisiko !== 'Semua Level Risiko' ? 1 : 0,
     filters.statusReport !== 'Semua Status Report' ? 1 : 0,
     filters.aiStatus !== 'Semua Status AI' ? 1 : 0,
+    filters.searchQuery?.trim() ? 1 : 0,
   ].reduce((a, b) => a + b, 0);
 
-  const allPossibleMonths = [
-    { label: 'Semua Bulan', value: 'Semua Bulan', count: monthCounts['all'] || 0 },
-    { label: 'Mei 2026', value: 'Mei 2026', count: monthCounts['Mei 2026'] || 0 },
-    { label: 'Juni 2026', value: 'Juni 2026', count: monthCounts['Juni 2026'] || 0 },
-    { label: 'Juli 2026', value: 'Juli 2026', count: monthCounts['Juli 2026'] || 0 },
-    { label: 'Agustus 2026', value: 'Agustus 2026', count: monthCounts['Agustus 2026'] || 0 },
-    { label: 'September 2026', value: 'September 2026', count: monthCounts['September 2026'] || 0 },
-    { label: 'Oktober 2026', value: 'Oktober 2026', count: monthCounts['Oktober 2026'] || 0 },
-    { label: 'November 2026', value: 'November 2026', count: monthCounts['November 2026'] || 0 },
-    { label: 'Desember 2026', value: 'Desember 2026', count: monthCounts['Desember 2026'] || 0 },
-  ];
+  // Dynamically extract all months with data from monthCounts
+  const dynamicActiveMonths = React.useMemo(() => {
+    const activeKeys = Object.keys(monthCounts).filter(
+      (k) => k !== 'all' && (monthCounts[k] || 0) > 0
+    );
+    // Chronological order helper
+    const monthOrder: Record<string, number> = {
+      januari: 1, februari: 2, maret: 3, april: 4, mei: 5, juni: 6,
+      juli: 7, agustus: 8, september: 9, oktober: 10, november: 11, desember: 12
+    };
+    return [...activeKeys].sort((a, b) => {
+      const getScore = (s: string) => {
+        const parts = s.split(/\s+/);
+        const name = (parts[0] || '').toLowerCase();
+        const yr = parseInt(parts[1] || '2026', 10);
+        return yr * 12 + (monthOrder[name] || 0);
+      };
+      return getScore(a) - getScore(b);
+    });
+  }, [monthCounts]);
 
-  // Only display months that actually exist in the data (count > 0)
-  const months = allPossibleMonths.filter(
-    (m) => m.value === 'Semua Bulan' || (m.count && m.count > 0)
-  );
+  const months = React.useMemo(() => {
+    return [
+      { label: 'Semua Bulan', value: 'Semua Bulan', count: monthCounts['all'] || 0 },
+      ...dynamicActiveMonths.map((m) => ({
+        label: m,
+        value: m,
+        count: monthCounts[m] || 0,
+      })),
+    ];
+  }, [dynamicActiveMonths, monthCounts]);
 
   const handleMonthChange = (monthValue: string) => {
     setFilters((prev) => ({
       ...prev,
       month: monthValue,
-      period: monthValue === 'Semua Bulan' ? 'Mei – Agustus 2026' : monthValue,
     }));
   };
 
   const handleReset = () => {
-    setFilters({
-      period: 'Mei – Agustus 2026',
+    setFilters((prev) => ({
+      ...prev,
       month: 'Semua Bulan',
       area: 'Semua Area',
       subArea: 'Semua Sub Area',
@@ -82,7 +97,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
       statusReport: 'Semua Status Report',
       searchQuery: '',
       aiStatus: 'Semua Status AI',
-    });
+    }));
   };
 
   return (
@@ -108,9 +123,25 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
             <span className="font-semibold text-emerald-900">{filters.month}</span>
           </div>
 
-          {activeFilterCount > (filters.month !== 'Semua Bulan' ? 1 : 0) && (
+          {/* Active Search / Reporter Filter Badge */}
+          {filters.searchQuery?.trim() && (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 border border-amber-300 text-xs font-medium text-amber-900 shadow-2xs animate-in fade-in">
+              <span className="text-amber-700 text-[11px]">Filter Pelapor / Kata Kunci:</span>
+              <span className="font-bold text-amber-950">&ldquo;{filters.searchQuery}&rdquo;</span>
+              <button
+                type="button"
+                onClick={() => setFilters((prev) => ({ ...prev, searchQuery: '' }))}
+                className="ml-0.5 p-0.5 rounded hover:bg-amber-200 text-amber-800 transition-colors cursor-pointer"
+                title="Hapus filter pencarian"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
+          {activeFilterCount > ((filters.month !== 'Semua Bulan' ? 1 : 0) + (filters.searchQuery?.trim() ? 1 : 0)) && (
             <span className="text-[11px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200 font-medium">
-              +{activeFilterCount - (filters.month !== 'Semua Bulan' ? 1 : 0)} kriteria aktif
+              +{activeFilterCount - ((filters.month !== 'Semua Bulan' ? 1 : 0) + (filters.searchQuery?.trim() ? 1 : 0))} kriteria aktif
             </span>
           )}
         </div>

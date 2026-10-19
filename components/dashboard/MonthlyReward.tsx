@@ -21,17 +21,7 @@ import {
   X,
 } from 'lucide-react';
 import { HazardReport, MonthName } from '@/types/hazard';
-
-const REWARD_MONTHS: MonthName[] = [
-  'Mei 2026',
-  'Juni 2026',
-  'Juli 2026',
-  'Agustus 2026',
-  'September 2026',
-  'Oktober 2026',
-  'November 2026',
-  'Desember 2026',
-];
+import { sortMonthsChronologically } from '@/lib/sample-data';
 
 interface MonthlyRewardProps {
   reports: HazardReport[];
@@ -46,14 +36,14 @@ export const MonthlyReward: React.FC<MonthlyRewardProps> = ({
   onVerifyReport,
   onSetWinner,
 }) => {
-  // Only display months that have actual reports
+  // Dynamically derive and sort all active months from data
   const availableMonths = useMemo(() => {
-    const monthsSet = new Set(reports.map((r) => r.month));
-    const active = REWARD_MONTHS.filter((m) => monthsSet.has(m));
-    return active.length > 0 ? active : (['Agustus 2026'] as MonthName[]);
+    const monthsSet = Array.from(new Set(reports.map((r) => r.month))).filter(Boolean);
+    const sorted = sortMonthsChronologically(monthsSet);
+    return sorted.length > 0 ? (sorted as MonthName[]) : (['September 2026'] as MonthName[]);
   }, [reports]);
 
-  const latestMonth = availableMonths[availableMonths.length - 1] || 'Agustus 2026';
+  const latestMonth = availableMonths[availableMonths.length - 1] || 'September 2026';
   const [selectedMonthState, setSelectedMonth] = useState<MonthName | null>(null);
   const selectedMonth: MonthName =
     selectedMonthState && availableMonths.includes(selectedMonthState)

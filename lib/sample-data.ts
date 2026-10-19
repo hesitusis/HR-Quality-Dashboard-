@@ -1,34 +1,140 @@
 import { HazardReport, QualityCategory, QualityScoreBreakdown, RiskLevel, AIResultStatus, LocationClarityStatus, MonthName } from '@/types/hazard';
 import rawDataset497 from './dataset-497.json';
 
-// Helper to determine month from date string
+// Helper map for Indonesian month ordering
+export const MONTH_ORDER_MAP: Record<string, number> = {
+  januari: 1,
+  jan: 1,
+  februari: 2,
+  feb: 2,
+  maret: 3,
+  mar: 3,
+  april: 4,
+  apr: 4,
+  mei: 5,
+  may: 5,
+  juni: 6,
+  jun: 6,
+  juli: 7,
+  jul: 7,
+  agustus: 8,
+  agu: 8,
+  aug: 8,
+  september: 9,
+  sep: 9,
+  oktober: 10,
+  okt: 10,
+  oct: 10,
+  november: 11,
+  nov: 11,
+  desember: 12,
+  des: 12,
+  dec: 12,
+};
+
+// Helper to determine month from date string dynamically
 export function parseMonth(dateStr: string): MonthName {
-  const lower = (dateStr || '').toLowerCase();
+  if (!dateStr) return 'Juli 2026';
+  const str = String(dateStr).trim();
+  const lower = str.toLowerCase();
+
+  // Extract year if available (e.g. 2026, 2027)
+  const yearMatch = str.match(/(20\d{2})/);
+  const year = yearMatch ? yearMatch[1] : '2026';
+
+  if (lower.includes('jan') || lower.startsWith('1/') || lower.includes('-jan-')) {
+    return `Januari ${year}`;
+  }
+  if (lower.includes('feb') || lower.startsWith('2/') || lower.includes('-feb-')) {
+    return `Februari ${year}`;
+  }
+  if (lower.includes('mar') || lower.startsWith('3/') || lower.includes('-mar-')) {
+    return `Maret ${year}`;
+  }
+  if (lower.includes('apr') || lower.startsWith('4/') || lower.includes('-apr-')) {
+    return `April ${year}`;
+  }
   if (lower.includes('mei') || lower.includes('may') || lower.startsWith('5/') || lower.includes('-may-')) {
-    return 'Mei 2026';
+    return `Mei ${year}`;
   }
   if (lower.includes('jun') || lower.startsWith('6/') || lower.includes('-jun-')) {
-    return 'Juni 2026';
+    return `Juni ${year}`;
   }
   if (lower.includes('jul') || lower.startsWith('7/') || lower.includes('-jul-')) {
-    return 'Juli 2026';
+    return `Juli ${year}`;
   }
   if (lower.includes('agu') || lower.includes('aug') || lower.startsWith('8/') || lower.includes('-aug-')) {
-    return 'Agustus 2026';
+    return `Agustus ${year}`;
   }
   if (lower.includes('sep') || lower.startsWith('9/') || lower.includes('-sep-')) {
-    return 'September 2026';
+    return `September ${year}`;
   }
   if (lower.includes('okt') || lower.includes('oct') || lower.startsWith('10/') || lower.includes('-oct-')) {
-    return 'Oktober 2026';
+    return `Oktober ${year}`;
   }
   if (lower.includes('nov') || lower.startsWith('11/') || lower.includes('-nov-')) {
-    return 'November 2026';
+    return `November ${year}`;
   }
   if (lower.includes('des') || lower.includes('dec') || lower.startsWith('12/') || lower.includes('-dec-')) {
-    return 'Desember 2026';
+    return `Desember ${year}`;
   }
-  return 'Juli 2026';
+  return `Juli ${year}`;
+}
+
+/**
+ * Sorts array of months (e.g. ['September 2026', 'Mei 2026']) chronologically
+ */
+export function sortMonthsChronologically(months: string[]): string[] {
+  return [...months].sort((a, b) => {
+    const parseScore = (mStr: string) => {
+      const parts = mStr.trim().split(/\s+/);
+      const name = (parts[0] || '').toLowerCase();
+      const yr = parseInt(parts[1] || '2026', 10);
+      const monthNum = MONTH_ORDER_MAP[name] || 0;
+      return yr * 12 + monthNum;
+    };
+    return parseScore(a) - parseScore(b);
+  });
+}
+
+/**
+ * Automatically derives period title based on available reports and filter
+ * E.g. 'Mei – September 2026', or 'September 2026' if month filter is selected
+ */
+export function getDynamicPeriodLabel(
+  reports: HazardReport[],
+  selectedMonth: string = 'Semua Bulan'
+): string {
+  if (selectedMonth && selectedMonth !== 'Semua Bulan') {
+    return selectedMonth;
+  }
+  if (!reports || reports.length === 0) {
+    return 'Mei – September 2026';
+  }
+
+  const uniqueMonths = Array.from(new Set(reports.map((r) => r.month))).filter(Boolean);
+  if (uniqueMonths.length === 0) return 'Mei – September 2026';
+  if (uniqueMonths.length === 1) return uniqueMonths[0];
+
+  const sorted = sortMonthsChronologically(uniqueMonths);
+  const earliest = sorted[0];
+  const latest = sorted[sorted.length - 1];
+
+  if (earliest === latest) return earliest;
+
+  const earliestParts = earliest.split(/\s+/);
+  const latestParts = latest.split(/\s+/);
+
+  const earliestName = earliestParts[0] || earliest;
+  const earliestYear = earliestParts[1] || '2026';
+  const latestName = latestParts[0] || latest;
+  const latestYear = latestParts[1] || '2026';
+
+  if (earliestYear === latestYear) {
+    return `${earliestName} – ${latestName} ${latestYear}`;
+  }
+
+  return `${earliest} – ${latest}`;
 }
 
 /**

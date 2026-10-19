@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Sidebar, NavTab } from '@/components/layout/Sidebar';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { FilterPanel } from '@/components/dashboard/FilterPanel';
@@ -15,7 +15,12 @@ import { AIAssessmentDetail } from '@/components/reports/AIAssessmentDetail';
 import { AIAssessmentAuditView } from '@/components/views/AIAssessmentAuditView';
 import { QualityAnalysisDeepView } from '@/components/views/QualityAnalysisDeepView';
 import { TopReporterFullView } from '@/components/views/TopReporterFullView';
-import { getInitialHazardReports, calculateQualityScore } from '@/lib/sample-data';
+import {
+  getInitialHazardReports,
+  calculateQualityScore,
+  getDynamicPeriodLabel,
+  sortMonthsChronologically,
+} from '@/lib/sample-data';
 import { HazardReport, FilterOptions, ReporterStats } from '@/types/hazard';
 import { parseCSVorTSV, processRawSpreadsheetRows } from '@/lib/csv-importer';
 
@@ -23,12 +28,54 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
   const [reports, setReports] = useState<HazardReport[]>(() => getInitialHazardReports());
   const [selectedReport, setSelectedReport] = useState<HazardReport | null>(null);
+  const [isLiveSyncing, setIsLiveSyncing] = useState(false);
+  const [liveSyncMessage, setLiveSyncMessage] = useState<string | null>(null);
 
-  // Safely restore cached reports on client mount to prevent SSR hydration mismatches
+  // Reusable function to fetch live data from Google Sheets
+  const performLiveSync = useCallback(async (isBackground = false) => {
+    setIsLiveSyncing(true);
+    if (!isBackground) {
+      setLiveSyncMessage('Sedang menyinkronkan data terbaru dari Google Sheets...');
+    }
+    try {
+      const res = await fetch('/api/sync-sheets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (data.success && data.csv) {
+        const rows = parseCSVorTSV(data.csv);
+        const imported = processRawSpreadsheetRows(rows);
+        if (imported.length > 0) {
+          setReports(imported);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('itu_hazard_reports_real_v1', JSON.stringify(imported));
+          }
+          const periodLabel = getDynamicPeriodLabel(imported);
+          setLiveSyncMessage(`Sinkronisasi berhasil: ${imported.length} data termuat (Periode ${periodLabel}).`);
+          setTimeout(() => setLiveSyncMessage(null), 4500);
+        }
+      } else if (!isBackground) {
+        setLiveSyncMessage(data.message || 'Gagal menyinkronkan data.');
+        setTimeout(() => setLiveSyncMessage(null), 4500);
+      }
+    } catch (_err) {
+      if (!isBackground) {
+        setLiveSyncMessage('Gagal menghubungi Google Sheets.');
+        setTimeout(() => setLiveSyncMessage(null), 4500);
+      }
+    } finally {
+      setIsLiveSyncing(false);
+    }
+  }, []);
+
+  // Safely restore cached reports on client mount & automatically sync with live Google Sheets
   useEffect(() => {
-    const timer = setTimeout(() => {
+    let isSubscribed = true;
+
+    const restoreTimer = setTimeout(() => {
       try {
-        // Clear any old dummy cached datasets from previous sessions
         localStorage.removeItem('itu_hazard_reports_dec2026');
         localStorage.removeItem('itu_hazard_reports_v2');
 
@@ -43,19 +90,13 @@ export default function DashboardPage() {
             Array.isArray(parsed) &&
             parsed.length > 0 &&
             parsed[0].scoreBreakdown?.tindakanPengendalian !== undefined;
-          const hasDummyMonths =
-            Array.isArray(parsed) &&
-            parsed.some((r: any) =>
-              ['September 2026', 'Oktober 2026', 'November 2026', 'Desember 2026'].includes(r.month)
-            );
 
           if (
             Array.isArray(parsed) &&
             parsed.length > 0 &&
             !hasNumericPelaporBug &&
             !hasMissingLocationStatus &&
-            !hasOld5ParamRubrik &&
-            !hasDummyMonths
+            !hasOld5ParamRubrik
           ) {
             setReports(parsed);
           } else {
@@ -73,12 +114,34 @@ export default function DashboardPage() {
       }
     }, 0);
 
-    return () => clearTimeout(timer);
-  }, []);
+    // Auto-sync in background on page load so new periods/data appear automatically
+    const autoSyncTimer = setTimeout(() => {
+      if (isSubscribed) {
+        performLiveSync(true);
+      }
+    }, 600);
+
+    // Auto-sync when returning to tab (after user updates spreadsheet in other tab)
+    let lastFocusSync = Date.now();
+    const handleWindowFocus = () => {
+      if (Date.now() - lastFocusSync > 25000) {
+        lastFocusSync = Date.now();
+        performLiveSync(true);
+      }
+    };
+    window.addEventListener('focus', handleWindowFocus);
+
+    return () => {
+      isSubscribed = false;
+      clearTimeout(restoreTimer);
+      clearTimeout(autoSyncTimer);
+      window.removeEventListener('focus', handleWindowFocus);
+    };
+  }, [performLiveSync]);
 
   // Global Filter State
   const [filters, setFilters] = useState<FilterOptions>({
-    period: 'Mei – Agustus 2026',
+    period: 'Semua Periode',
     month: 'Semua Bulan',
     area: 'Semua Area',
     subArea: 'Semua Sub Area',
@@ -92,6 +155,11 @@ export default function DashboardPage() {
     searchQuery: '',
     aiStatus: 'Semua Status AI',
   });
+
+  // Dynamically compute active period title based on data and active month filter
+  const dynamicPeriodTitle = useMemo(() => {
+    return getDynamicPeriodLabel(reports, filters.month);
+  }, [reports, filters.month]);
 
   // Extract unique filter dropdown options from raw data
   const filterOptions = useMemo(() => {
@@ -268,20 +336,10 @@ export default function DashboardPage() {
       }
     : { name: '-', score: 0, count: 0 };
 
-  // Trend line chart data calculation (only for months with real data)
+  // Trend line chart data calculation (dynamically for all months present in reports)
   const monthlyTrendData = useMemo(() => {
-    const allMonths = [
-      'Mei 2026',
-      'Juni 2026',
-      'Juli 2026',
-      'Agustus 2026',
-      'September 2026',
-      'Oktober 2026',
-      'November 2026',
-      'Desember 2026',
-    ];
-    const activeMonths = allMonths.filter((m) => reports.some((r) => r.month === m));
-    const monthsToUse = activeMonths.length > 0 ? activeMonths : ['Mei 2026', 'Juni 2026', 'Juli 2026', 'Agustus 2026'];
+    const uniqueMonths = Array.from(new Set(reports.map((r) => r.month))).filter(Boolean);
+    const monthsToUse = sortMonthsChronologically(uniqueMonths);
 
     return monthsToUse.map((m) => {
       const monthReps = reports.filter((r) => r.month === m);
@@ -326,7 +384,7 @@ export default function DashboardPage() {
   // Reset filters handler
   const handleResetFilters = () => {
     setFilters({
-      period: 'Mei – Agustus 2026',
+      period: 'Semua Periode',
       month: 'Semua Bulan',
       area: 'Semua Area',
       subArea: 'Semua Sub Area',
@@ -464,39 +522,6 @@ export default function DashboardPage() {
     });
   };
 
-  const [isLiveSyncing, setIsLiveSyncing] = useState(false);
-  const [liveSyncMessage, setLiveSyncMessage] = useState<string | null>(null);
-
-  const handleQuickSync = async () => {
-    setIsLiveSyncing(true);
-    setLiveSyncMessage(null);
-    try {
-      const res = await fetch('/api/sync-sheets', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      });
-      const data = await res.json();
-      if (data.success && data.csv) {
-        const rows = parseCSVorTSV(data.csv);
-        const imported = processRawSpreadsheetRows(rows);
-        if (imported.length > 0) {
-          handleImportReports(imported, 'replace');
-          setLiveSyncMessage(`Berhasil memperbarui ${imported.length} data terbaru.`);
-          setTimeout(() => setLiveSyncMessage(null), 4000);
-        }
-      } else {
-        setLiveSyncMessage(data.message || 'Gagal menyinkronkan data.');
-        setTimeout(() => setLiveSyncMessage(null), 4000);
-      }
-    } catch (_err: any) {
-      setLiveSyncMessage('Gagal menyinkronkan data.');
-      setTimeout(() => setLiveSyncMessage(null), 4000);
-    } finally {
-      setIsLiveSyncing(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col md:flex-row antialiased text-slate-800">
       {/* Sidebar Navigation */}
@@ -511,14 +536,14 @@ export default function DashboardPage() {
       <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
         {/* Top Sticky Header */}
         <DashboardHeader
-          activePeriod={filters.period}
+          activePeriod={dynamicPeriodTitle}
           totalFiltered={filteredReports.length}
           totalAll={reports.length}
           onResetFilters={handleResetFilters}
           onExportData={handleExportCSV}
           searchQuery={filters.searchQuery}
           setSearchQuery={(q) => setFilters((prev) => ({ ...prev, searchQuery: q }))}
-          onRefresh={handleQuickSync}
+          onRefresh={() => performLiveSync(false)}
           isRefreshing={isLiveSyncing}
           refreshMessage={liveSyncMessage}
         />
@@ -535,6 +560,31 @@ export default function DashboardPage() {
                 monthCounts={monthCounts}
                 options={filterOptions}
               />
+
+              {/* Notice Banner when filtered by search query / specific reporter */}
+              {filters.searchQuery?.trim() && (
+                <div className="p-3.5 bg-amber-50 border border-amber-300 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amber-900 shadow-2xs animate-in fade-in">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-7 h-7 rounded-lg bg-amber-200/80 text-amber-800 font-bold flex items-center justify-center shrink-0 text-sm">
+                      🔍
+                    </span>
+                    <div>
+                      <span className="text-amber-800">Filter Aktif untuk pelapor / kata kunci: </span>
+                      <strong className="font-bold text-amber-950 text-sm">&ldquo;{filters.searchQuery}&rdquo;</strong>
+                      <span className="text-amber-800 ml-2 font-medium">
+                        (Menampilkan <strong>{filteredReports.length}</strong> dari total {reports.length} laporan)
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFilters((prev) => ({ ...prev, searchQuery: '' }))}
+                    className="px-3.5 py-1.5 bg-white hover:bg-amber-100 text-amber-900 font-bold text-xs rounded-lg border border-amber-300 shadow-2xs transition-colors shrink-0 cursor-pointer self-start sm:self-auto"
+                  >
+                    Tampilkan Semua Pelapor ({reports.length} Laporan)
+                  </button>
+                </div>
+              )}
 
               {/* 6 Core KPI Cards */}
               <KPICards
@@ -575,6 +625,9 @@ export default function DashboardPage() {
                       } else {
                         setActiveTab('top-reporter');
                       }
+                    }}
+                    onViewReporterDetail={(_rep) => {
+                      setActiveTab('top-reporter');
                     }}
                   />
                 </div>
